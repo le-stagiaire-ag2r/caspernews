@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-casper-dark text-white antialiased;
+  }
+
+  * {
+    @apply border-gray-700;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-lg font-semibold transition duration-200;
+  }
+
+  .btn-primary {
+    @apply btn bg-casper-red hover:bg-red-700 text-white;
+  }
+
+  .btn-secondary {
+    @apply btn bg-casper-gray hover:bg-casper-gray-light text-white;
+  }
+
+  .card {
+    @apply bg-casper-gray rounded-lg p-6 border border-gray-700;
+  }
+
+  .input {
+    @apply w-full bg-casper-gray-light border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-casper-red transition;
+  }
+}
