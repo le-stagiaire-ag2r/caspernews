@@ -1,12 +1,10 @@
-#![cfg_attr(not(feature = "std"), no_std)]
-
+#![cfg_attr(not(test), no_std)]
+#![cfg_attr(not(test), no_main)]
 extern crate alloc;
 
 pub mod yield_optimizer;
 
 pub use yield_optimizer::YieldOptimizer;
-pub use yield_optimizer::YieldOptimizerHostRef;
-pub use yield_optimizer::YieldOptimizerInitArgs;
 
 #[cfg(test)]
 mod tests;

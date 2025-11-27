@@ -1,0 +1,7 @@
+[[contracts]]
+fqn = "yield_optimizer::YieldOptimizer"
+
+[casper]
+node_address = "https://rpc.testnet.casperlabs.io"
+chain_name = "casper-test"
+secret_key_path = "./secret_key.pem"
