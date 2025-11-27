@@ -10,21 +10,28 @@ const PAYMENT_AMOUNT = '100000000000'; // 100 CSPR
 const GAS_PRICE = 1;
 const TTL = 1800000; // 30 minutes
 
-// Load secret key
+// Load secret key from PEM file
 const secretKeyPath = path.join(__dirname, 'secret_key.pem');
+const pemContent = fs.readFileSync(secretKeyPath, 'utf8');
 
-// Parse PEM key (Ed25519 key from PEM file)
+// Parse PEM to extract Ed25519 private key
+const base64Match = pemContent.match(/-----BEGIN PRIVATE KEY-----\s*([A-Za-z0-9+/=\s]+)\s*-----END PRIVATE KEY-----/);
+if (!base64Match) {
+  console.error('❌ Failed to parse PEM file');
+  process.exit(1);
+}
+
+const base64Content = base64Match[1].replace(/\s/g, '');
+const rawKey = Buffer.from(base64Content, 'base64');
+const privateKeyBytes = rawKey.slice(16, 48); // Ed25519 key at offset 16 in PKCS#8
+
+// Parse with Casper SDK
 let keyPair;
 try {
-  keyPair = casperSDK.Keys.Ed25519.parsePrivateKey(
-    casperSDK.Keys.Ed25519.readBase64WithPEM(fs.readFileSync(secretKeyPath, 'utf8'))
-  );
+  keyPair = casperSDK.Keys.Ed25519.parsePrivateKey(privateKeyBytes);
 } catch (e) {
-  // Try alternative parsing
-  const privateKeyHex = 'MTQUNbY7x1St2cwGMzk4OLk3uX+qAhNXCZmglTtEyxdXxh';
-  keyPair = casperSDK.Keys.Ed25519.parsePrivateKey(
-    casperSDK.Keys.Ed25519.readBase64WithPEM(fs.readFileSync(secretKeyPath, 'utf8'))
-  );
+  console.error('❌ Failed to parse private key:', e.message);
+  process.exit(1);
 }
 
 // Load WASM file

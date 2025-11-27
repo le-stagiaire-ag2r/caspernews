@@ -7,10 +7,17 @@ const NODE_URL = 'https://rpc.testnet.casperlabs.io';
 const NETWORK_NAME = 'casper-test';
 const PAYMENT_AMOUNT = '200000000000'; // 200 CSPR (safe amount for contract deployment)
 
-// Private key from PEM file (32 bytes base64 decoded)
-// PEM content: MC4CAQAwBQYDK2VwBCIEIBTbY7x1St2cwGMzk4OLk3uX+qAhNXCZmglTtEyxdXxh
-// This decodes to the Ed25519 private key (after removing header bytes)
-const privateKeyBytes = Buffer.from('14db63bc754add9cc063338383838b937b97faa021357099982953b44cb17576', 'hex').slice(0, 32);
+// Load and parse private key from PEM file
+const secretKeyPath = path.join(__dirname, 'secret_key.pem');
+const pemContent = fs.readFileSync(secretKeyPath, 'utf8');
+const base64Match = pemContent.match(/-----BEGIN PRIVATE KEY-----\s*([A-Za-z0-9+/=\s]+)\s*-----END PRIVATE KEY-----/);
+if (!base64Match) {
+  console.error('❌ Failed to parse PEM file');
+  process.exit(1);
+}
+const base64Content = base64Match[1].replace(/\s/g, '');
+const rawKey = Buffer.from(base64Content, 'base64');
+const privateKeyBytes = rawKey.slice(16, 48); // Ed25519 key at offset 16, 32 bytes
 
 // Create keypair from raw bytes
 const nacl = require('tweetnacl');
