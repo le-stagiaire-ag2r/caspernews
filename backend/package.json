@@ -1,0 +1,38 @@
+{
+  "name": "casper-defi-yield-optimizer-backend",
+  "version": "1.0.0",
+  "description": "Backend service for Casper DeFi Yield Optimizer",
+  "main": "dist/server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "casper",
+    "defi",
+    "blockchain",
+    "yield-optimizer"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.1",
+    "better-sqlite3": "^9.3.0",
+    "axios": "^1.6.5",
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/cors": "^2.8.17",
+    "@types/node": "^20.11.5",
+    "@types/better-sqlite3": "^7.6.9",
+    "@types/ws": "^8.5.10",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}
