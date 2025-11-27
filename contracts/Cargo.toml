@@ -1,0 +1,21 @@
+[package]
+name = "yield-optimizer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+odra = "2.4"
+
+[dev-dependencies]
+odra = "2.4"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[profile.release]
+codegen-units = 1
+opt-level = "z"
+lto = true
+
+[features]
+default = []
