@@ -70,11 +70,22 @@ Contract hash: hash-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 **Save this hash!** You'll need it for configuration.
 
+### ✅ Deployed Contract Information
+
+**Status:** Successfully deployed to Casper Testnet!
+
+- **Package Hash:** `hash-f49d339a1e82cb95cc1ce2eea5c0c7589e8694d3678d0ab9432e57ea00e1d1df`
+- **Deploy Hash:** `697df7c33b8495b2db4c81f3ecf7faeab2fd65e9d2986beac97e0e496ea325f6`
+- **Explorer:** https://testnet.cspr.live/deploy/697df7c33b8495b2db4c81f3ecf7faeab2fd65e9d2986beac97e0e496ea325f6
+- **Account:** https://testnet.cspr.live/account/01854e96435611f12bdf9fe5136b338122d1b53e83dd04261a52966edc1099166f
+- **Cost:** ~321.44 CSPR
+- **Deployed:** November 28, 2025
+
 ## Step 6: Configure Environment Variables
 
 ### Frontend (.env)
 ```env
-VITE_CONTRACT_HASH=hash-xxxxxxxxxxxxx
+VITE_CONTRACT_HASH=hash-f49d339a1e82cb95cc1ce2eea5c0c7589e8694d3678d0ab9432e57ea00e1d1df
 VITE_CASPER_NETWORK=casper-test
 VITE_CASPER_RPC_URL=https://rpc.testnet.casperlabs.io/rpc
 VITE_API_URL=http://localhost:3001/api
@@ -82,7 +93,7 @@ VITE_API_URL=http://localhost:3001/api
 
 ### Backend (.env)
 ```env
-CONTRACT_HASH=hash-xxxxxxxxxxxxx
+CONTRACT_HASH=hash-f49d339a1e82cb95cc1ce2eea5c0c7589e8694d3678d0ab9432e57ea00e1d1df
 CSPR_CLOUD_STREAMING_URL=wss://streaming.testnet.cspr.cloud
 PORT=3001
 DATABASE_PATH=./data/optimizer.db
