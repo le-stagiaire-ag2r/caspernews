@@ -167,7 +167,7 @@ export const signAndSubmitDeploy = async (
 
     console.log('📤 Sending deploy to wallet for signing...');
 
-    // Sign with wallet provider - it returns a plain JS object
+    // Sign with wallet provider
     const signedDeployData = await walletProvider.sign(
       JSON.stringify(deployJson),
       deploy.header.account!.toHex()
@@ -175,14 +175,33 @@ export const signAndSubmitDeploy = async (
 
     console.log('✅ Deploy signed by wallet');
     console.log('📋 Signed deploy data type:', typeof signedDeployData);
+    console.log('📋 Signed deploy data keys:', Object.keys(signedDeployData || {}));
+    console.log('📋 Is string?', typeof signedDeployData === 'string');
 
-    // Convert the plain object to a proper Deploy instance
-    const signedDeploy = Deploy.fromJSON(signedDeployData);
+    // Try to parse if it's a string, otherwise use directly
+    let deployToSubmit;
+    if (typeof signedDeployData === 'string') {
+      // Parse the JSON string first
+      const parsedData = JSON.parse(signedDeployData);
+      deployToSubmit = Deploy.fromJSON(parsedData);
+    } else if (signedDeployData && typeof signedDeployData === 'object') {
+      // Check if it's already a Deploy instance
+      if (signedDeployData.constructor && signedDeployData.constructor.name === 'Deploy') {
+        console.log('📋 Already a Deploy instance');
+        deployToSubmit = signedDeployData;
+      } else {
+        // Try to use it directly without fromJSON conversion
+        console.log('📋 Using signed deploy directly');
+        deployToSubmit = signedDeployData;
+      }
+    } else {
+      throw new Error('Unexpected signed deploy data format');
+    }
 
-    console.log('✅ Deploy converted to SDK instance');
+    console.log('✅ Deploy ready for submission');
 
     // Submit to network
-    const result = await rpcClient.putDeploy(signedDeploy);
+    const result = await rpcClient.putDeploy(deployToSubmit);
 
     const deployHashString = result.deployHash.toHex();
     console.log('✅ Deploy submitted:', deployHashString);
