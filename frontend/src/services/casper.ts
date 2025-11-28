@@ -208,3 +208,36 @@ export const getDeployStatus = async (deployHash: string): Promise<any> => {
     throw error;
   }
 };
+
+/**
+ * Sign deploy with wallet provider and submit to network
+ */
+export const signAndSubmitDeploy = async (deploy: Deploy, provider: any): Promise<string> => {
+  console.log('🔏 Signing deploy with wallet provider...');
+
+  try {
+    // Sign with wallet provider (Casper Wallet or Casper Signer)
+    let signedDeployJson;
+
+    if (typeof provider.sign === 'function') {
+      // Casper Wallet - pass deploy object directly
+      signedDeployJson = await provider.sign(deploy);
+      console.log('✅ Deploy signed by Casper Wallet');
+    } else if (typeof provider.signDeploy === 'function') {
+      // Casper Signer - pass deploy object directly
+      signedDeployJson = await provider.signDeploy(deploy);
+      console.log('✅ Deploy signed by Casper Signer');
+    } else {
+      throw new Error('Wallet provider does not support signing');
+    }
+
+    console.log('📋 Signed deploy JSON:', signedDeployJson);
+
+    // Submit signed deploy to network
+    const deployHash = await submitDeploy(signedDeployJson);
+    return deployHash;
+  } catch (error: any) {
+    console.error('❌ Sign and submit failed:', error);
+    throw error;
+  }
+};
