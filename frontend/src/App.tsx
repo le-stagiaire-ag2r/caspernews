@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ClickProvider } from '@make-software/csprclick-ui';
+import { ClickProvider, ClickUI } from '@make-software/csprclick-ui';
 import { clickOptions } from './config/csprclick';
 import { Header } from './components/Header';
 import { Dashboard } from './components/Dashboard';
@@ -19,6 +19,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ClickProvider options={clickOptions}>
+        <ClickUI />
         <div className="min-h-screen bg-casper-dark">
           <Header />
 
