@@ -1,22 +1,21 @@
 import { useWallet } from '../hooks/useWallet';
 
 export const Header = () => {
-  const { activeAccount, isConnected, clickRef } = useWallet();
+  const { activeAccount, isConnected, connectDirectWallet, disconnectDirectWallet } = useWallet();
 
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
-  const handleConnect = () => {
-    if (clickRef) {
-      clickRef.signIn();
+  const handleConnect = async () => {
+    const success = await connectDirectWallet();
+    if (!success) {
+      alert('Failed to connect wallet. Please install Casper Wallet extension.');
     }
   };
 
   const handleDisconnect = () => {
-    if (clickRef) {
-      clickRef.signOut();
-    }
+    disconnectDirectWallet();
   };
 
   return (
