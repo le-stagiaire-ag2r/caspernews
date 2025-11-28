@@ -58,8 +58,11 @@ export const createDepositDeploy = (
   // Payment amount for contract call (5 CSPR in motes)
   const paymentAmount = csprToMotes('5');
 
-  // Create contract hash from string (includes 'hash-' prefix)
-  const contractHash = ContractHash.newContract(CONTRACT_HASH);
+  // Create contract hash from string - remove 'hash-' prefix if present
+  const hashHex = CONTRACT_HASH.startsWith('hash-')
+    ? CONTRACT_HASH.substring(5)
+    : CONTRACT_HASH;
+  const contractHash = ContractHash.newContract(hashHex);
 
   // Runtime arguments for deposit - Odra expects 'amount' as attached value
   const args = Args.fromMap({
@@ -105,8 +108,11 @@ export const createWithdrawDeploy = (
   // Payment amount for contract call (7 CSPR in motes)
   const paymentAmount = csprToMotes('7');
 
-  // Create contract hash from string (includes 'hash-' prefix)
-  const contractHash = ContractHash.newContract(CONTRACT_HASH);
+  // Create contract hash from string - remove 'hash-' prefix if present
+  const hashHex = CONTRACT_HASH.startsWith('hash-')
+    ? CONTRACT_HASH.substring(5)
+    : CONTRACT_HASH;
+  const contractHash = ContractHash.newContract(hashHex);
 
   // Runtime arguments for withdraw
   const args = Args.fromMap({
