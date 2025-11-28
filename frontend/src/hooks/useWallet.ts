@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export interface WalletAccount {
   public_key: string;
@@ -14,6 +14,8 @@ interface WalletContextType {
 }
 
 const WalletContext = createContext<WalletContextType | null>(null);
+
+const WALLET_STORAGE_KEY = 'casper_wallet_disconnected';
 
 export const WalletProvider = ({ children }: { children: ReactNode }) => {
   const [activeAccount, setActiveAccount] = useState<WalletAccount | null>(null);
@@ -42,6 +44,9 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
           setIsConnected(true);
           setProvider(walletProvider);
 
+          // Clear disconnected flag when successfully connected
+          localStorage.removeItem(WALLET_STORAGE_KEY);
+
           console.log('✅ Wallet state updated - isConnected: true');
           return true;
         }
@@ -58,6 +63,9 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
           setIsConnected(true);
           setProvider(window.casperlabsHelper);
 
+          // Clear disconnected flag when successfully connected
+          localStorage.removeItem(WALLET_STORAGE_KEY);
+
           console.log('✅ Wallet state updated - isConnected: true');
           return true;
         }
@@ -72,10 +80,48 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const disconnectDirectWallet = () => {
+    console.log('🔌 Disconnecting wallet...');
+
+    // Call disconnect method on provider if available
+    if (provider) {
+      try {
+        if (typeof provider.disconnect === 'function') {
+          provider.disconnect();
+          console.log('✅ Called provider.disconnect()');
+        } else if (typeof provider.disconnectFromSite === 'function') {
+          provider.disconnectFromSite();
+          console.log('✅ Called provider.disconnectFromSite()');
+        }
+      } catch (error) {
+        console.warn('⚠️ Error calling provider disconnect:', error);
+      }
+    }
+
+    // Set localStorage flag to prevent auto-reconnect
+    localStorage.setItem(WALLET_STORAGE_KEY, 'true');
+
+    // Clear state
     setActiveAccount(null);
     setIsConnected(false);
     setProvider(null);
+
+    console.log('✅ Wallet disconnected - will not auto-reconnect');
   };
+
+  // Check on mount if we should auto-reconnect
+  useEffect(() => {
+    const wasDisconnected = localStorage.getItem(WALLET_STORAGE_KEY);
+
+    if (wasDisconnected) {
+      console.log('ℹ️ User previously disconnected - not auto-reconnecting');
+      return;
+    }
+
+    // Only try to reconnect if user hasn't explicitly disconnected
+    console.log('ℹ️ Checking for existing wallet connection...');
+    // Note: We don't auto-connect on mount to avoid annoying the user
+    // They need to click "Connect Wallet" explicitly
+  }, []);
 
   const value = {
     activeAccount,
