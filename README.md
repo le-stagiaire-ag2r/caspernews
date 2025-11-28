@@ -196,6 +196,18 @@ caspernews/
 - **Block Time**: 8 seconds
 - **Fee Structure**: Burn mechanism active
 
+## ✅ Deployment Status
+
+**Smart Contract:** Successfully deployed to Casper Testnet!
+
+- **Package Hash:** `hash-f49d339a1e82cb95cc1ce2eea5c0c7589e8694d3678d0ab9432e57ea00e1d1df`
+- **Deploy Hash:** `697df7c33b8495b2db4c81f3ecf7faeab2fd65e9d2986beac97e0e496ea325f6`
+- **Explorer:** [View on testnet.cspr.live](https://testnet.cspr.live/deploy/697df7c33b8495b2db4c81f3ecf7faeab2fd65e9d2986beac97e0e496ea325f6)
+- **Deployment Date:** November 28, 2025
+- **Status:** ✅ Active and ready for interaction
+
+For deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md).
+
 ## 🎓 Learning Objectives
 
 By completing this tutorial, you will learn:
