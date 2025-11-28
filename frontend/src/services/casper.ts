@@ -43,7 +43,41 @@ export const createWithdrawDeploy = (_publicKey: string, _shares: string): any =
   return null;
 };
 
-export const submitDeploy = async (_deploy: any): Promise<string> => {
-  console.warn('Transaction support not yet implemented');
-  throw new Error('Transaction support coming soon');
+export const submitDeploy = async (signedDeployJson: any): Promise<string> => {
+  console.log('📤 Submitting deploy to RPC:', RPC_URL);
+
+  try {
+    const response = await fetch(RPC_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'account_put_deploy',
+        params: [signedDeployJson],
+        id: 1,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    console.log('✅ RPC Response:', result);
+
+    if (result.error) {
+      throw new Error(`RPC Error: ${result.error.message || JSON.stringify(result.error)}`);
+    }
+
+    const deployHash = result.result?.deploy_hash || result.result;
+    console.log('✅ Deploy hash:', deployHash);
+
+    return deployHash;
+  } catch (error: any) {
+    console.error('❌ Deploy submission failed:', error);
+    throw error;
+  }
 };
