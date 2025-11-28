@@ -171,8 +171,15 @@ export const signAndSubmitDeploy = async (
       deploy.header.account!.toHex()
     );
 
-    // Parse signed deploy
-    const signedDeploy = Deploy.fromJSON(JSON.parse(signedDeployJson));
+    // Parse signed deploy - handle both string and object returns
+    let parsedSignedDeploy;
+    if (typeof signedDeployJson === 'string') {
+      parsedSignedDeploy = JSON.parse(signedDeployJson);
+    } else {
+      parsedSignedDeploy = signedDeployJson;
+    }
+
+    const signedDeploy = Deploy.fromJSON(parsedSignedDeploy);
 
     // Submit to network
     const result = await rpcClient.putDeploy(signedDeploy);
