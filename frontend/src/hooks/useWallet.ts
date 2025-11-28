@@ -53,34 +53,50 @@ export const useWallet = () => {
   // Direct wallet connection (fallback if clickRef doesn't work)
   const connectDirectWallet = async () => {
     try {
+      console.log('🔍 Attempting wallet connection...');
+      console.log('CasperWalletProvider available?', typeof window.CasperWalletProvider !== 'undefined');
+      console.log('casperlabsHelper available?', typeof window.casperlabsHelper !== 'undefined');
+
       // Try Casper Wallet
       if (typeof window.CasperWalletProvider !== 'undefined') {
+        console.log('✅ Casper Wallet detected, requesting connection...');
         const walletProvider = window.CasperWalletProvider();
-        const isConnected = await walletProvider.requestConnection();
+        const connected = await walletProvider.requestConnection();
+        console.log('Connection result:', connected);
 
-        if (isConnected) {
+        if (connected) {
           const publicKey = await walletProvider.getActivePublicKey();
+          console.log('✅ Public key received:', publicKey);
+
           setActiveAccount({ public_key: publicKey });
           setIsConnected(true);
           setProvider(walletProvider);
+
+          console.log('✅ Wallet state updated - isConnected: true');
           return true;
         }
       }
 
       // Try Casper Signer
       if (typeof window.casperlabsHelper !== 'undefined') {
+        console.log('✅ Casper Signer detected, requesting connection...');
         const publicKey = await window.casperlabsHelper.requestConnection();
+        console.log('Public key received:', publicKey);
+
         if (publicKey) {
           setActiveAccount({ public_key: publicKey });
           setIsConnected(true);
           setProvider(window.casperlabsHelper);
+
+          console.log('✅ Wallet state updated - isConnected: true');
           return true;
         }
       }
 
+      console.error('❌ No wallet provider found');
       throw new Error('No Casper wallet detected. Please install Casper Wallet extension.');
     } catch (error) {
-      console.error('Wallet connection failed:', error);
+      console.error('❌ Wallet connection failed:', error);
       return false;
     }
   };
