@@ -1,11 +1,21 @@
-import { useState } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 export interface WalletAccount {
   public_key: string;
   name?: string;
 }
 
-export const useWallet = () => {
+interface WalletContextType {
+  activeAccount: WalletAccount | null;
+  isConnected: boolean;
+  provider: any;
+  connectDirectWallet: () => Promise<boolean>;
+  disconnectDirectWallet: () => void;
+}
+
+const WalletContext = createContext<WalletContextType | null>(null);
+
+export const WalletProvider = ({ children }: { children: ReactNode }) => {
   const [activeAccount, setActiveAccount] = useState<WalletAccount | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [provider, setProvider] = useState<any>(null);
@@ -67,13 +77,23 @@ export const useWallet = () => {
     setProvider(null);
   };
 
-  return {
+  const value = {
     activeAccount,
     isConnected,
     provider,
     connectDirectWallet,
     disconnectDirectWallet,
   };
+
+  return React.createElement(WalletContext.Provider, { value }, children);
+};
+
+export const useWallet = () => {
+  const context = useContext(WalletContext);
+  if (!context) {
+    throw new Error('useWallet must be used within WalletProvider');
+  }
+  return context;
 };
 
 // Type declarations for window
