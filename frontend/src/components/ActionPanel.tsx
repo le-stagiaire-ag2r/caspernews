@@ -49,8 +49,7 @@ export const ActionPanel = () => {
     );
   }
 
-  const gasEstimate = estimateGas(activeTab);
-  const gasInCspr = motesToCspr(gasEstimate);
+  const gasEstimate = estimateGas(activeTab); // Already in CSPR
 
   return (
     <div className="card">
@@ -105,7 +104,7 @@ export const ActionPanel = () => {
 
         <div className="flex justify-between text-sm text-gray-400 mb-4">
           <span>Estimated Gas:</span>
-          <span className="font-mono">~{gasInCspr} CSPR</span>
+          <span className="font-mono">~{gasEstimate} CSPR</span>
         </div>
 
         <button

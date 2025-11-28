@@ -1,6 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ClickProvider } from '@make-software/csprclick-ui';
-import { clickOptions } from './config/csprclick';
+import { WalletProvider } from './hooks/useWallet';
 import { Header } from './components/Header';
 import { Dashboard } from './components/Dashboard';
 import { ActionPanel } from './components/ActionPanel';
@@ -18,9 +17,9 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ClickProvider options={clickOptions}>
+      <WalletProvider>
         <div className="min-h-screen bg-casper-dark">
-          <Header />
+        <Header />
 
           <main className="container mx-auto px-4 py-8">
             <Dashboard />
@@ -45,7 +44,7 @@ function App() {
             </div>
           </footer>
         </div>
-      </ClickProvider>
+      </WalletProvider>
     </QueryClientProvider>
   );
 }

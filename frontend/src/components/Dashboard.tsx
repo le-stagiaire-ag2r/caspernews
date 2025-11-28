@@ -1,53 +1,43 @@
-import { useQuery } from '@tanstack/react-query';
-import { fetchPoolStats } from '../services/api';
 import { useWallet } from '../hooks/useWallet';
-import { motesToCspr } from '../services/casper';
+
+// DEMO DATA - Replace with real data from backend in Phase 3
+const DEMO_STATS = {
+  tvl: 50234.56,        // Total Value Locked in CSPR
+  avgApy: 12.5,         // Average APY across all pools
+  userPosition: 1250.00, // User's position if connected
+  tvlTrend: '+5.2',     // 24h trend
+  apyTrend: '+0.8',     // 24h trend
+  positionTrend: '+3.1' // 24h trend
+};
 
 export const Dashboard = () => {
   const { activeAccount } = useWallet();
 
-  // Fetch pool statistics from backend
-  const { data: stats, isLoading } = useQuery({
-    queryKey: ['poolStats'],
-    queryFn: fetchPoolStats,
-    refetchInterval: 10000, // Refresh every 10 seconds
-  });
+  // Using demo data for now - will be replaced with real API calls in Phase 3
+  const isLoading = false;
+  const stats = DEMO_STATS;
 
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="card animate-pulse">
-            <div className="h-4 bg-gray-700 rounded w-1/2 mb-2"></div>
-            <div className="h-8 bg-gray-700 rounded w-3/4 mb-2"></div>
-            <div className="h-3 bg-gray-700 rounded w-1/4"></div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  const tvlCspr = stats ? motesToCspr(stats.tvl) : '0';
-  const userPositionCspr = '0'; // Will be updated with real position data
+  const tvlCspr = stats.tvl.toFixed(2);
+  const userPositionCspr = activeAccount ? stats.userPosition.toFixed(2) : '0.00';
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
       <StatCard
         label="Total Value Locked"
-        value={`${parseFloat(tvlCspr).toFixed(2)} CSPR`}
-        trend="+0%"
+        value={`${tvlCspr} CSPR`}
+        trend={`${stats.tvlTrend}%`}
         isLoading={isLoading}
       />
       <StatCard
         label="Average APY"
-        value={`${stats?.avgApy || 0}%`}
-        trend="+0%"
+        value={`${stats.avgApy}%`}
+        trend={`${stats.apyTrend}%`}
         isLoading={isLoading}
       />
       <StatCard
         label="Your Position"
         value={`${userPositionCspr} CSPR`}
-        trend="+0%"
+        trend={activeAccount ? `${stats.positionTrend}%` : '+0%'}
         isLoading={isLoading}
         highlight={!!activeAccount}
       />

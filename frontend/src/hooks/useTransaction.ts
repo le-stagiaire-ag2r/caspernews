@@ -1,23 +1,31 @@
 import { useState } from 'react';
 import { useWallet } from './useWallet';
+import {
+  createDepositDeploy,
+  createWithdrawDeploy,
+  signAndSubmitDeploy,
+} from '../services/casper';
+
+export type TransactionStatus = 'idle' | 'preparing' | 'signing' | 'submitting' | 'success' | 'error';
 
 export interface TransactionState {
+  status: TransactionStatus;
   isLoading: boolean;
   error: string | null;
   deployHash: string | null;
 }
 
 export const useTransaction = () => {
-  const { activeAccount } = useWallet();
+  const { activeAccount, provider } = useWallet();
   const [state, setState] = useState<TransactionState>({
+    status: 'idle',
     isLoading: false,
     error: null,
     deployHash: null,
   });
 
   /**
-   * Execute a deposit transaction (placeholder)
-   * TODO: Implement with casper-js-sdk v5
+   * Execute a deposit transaction
    */
   const deposit = async (amountCspr: string) => {
     if (!activeAccount) {
@@ -25,27 +33,37 @@ export const useTransaction = () => {
       return null;
     }
 
-    setState({ isLoading: true, error: null, deployHash: null });
+    if (!provider) {
+      setState(prev => ({ ...prev, error: 'Wallet provider not available' }));
+      return null;
+    }
 
     try {
-      // TODO: Implement actual transaction
-      console.log('Deposit transaction:', { amountCspr, publicKey: activeAccount.public_key });
+      console.log('🚀 Starting deposit transaction...');
+      console.log('Public Key:', activeAccount.public_key);
+      console.log('Amount:', amountCspr, 'CSPR');
 
-      // Simulate transaction (remove this when implementing real transaction)
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setState({ status: 'preparing', isLoading: true, error: null, deployHash: null });
 
-      setState({
-        isLoading: false,
-        error: 'Transaction support coming soon',
-        deployHash: null,
-      });
+      // Create deploy
+      const deploy = createDepositDeploy(activeAccount.public_key, amountCspr);
+      console.log('✅ Deploy created');
 
-      return null;
+      setState({ status: 'signing', isLoading: true, error: null, deployHash: null });
+
+      // Sign and submit
+      const deployHash = await signAndSubmitDeploy(deploy, provider);
+      console.log('✅ Deploy submitted:', deployHash);
+
+      setState({ status: 'success', isLoading: false, error: null, deployHash });
+
+      return deployHash;
     } catch (error: any) {
-      console.error('Deposit failed:', error);
+      console.error('❌ Deposit failed:', error);
       setState({
+        status: 'error',
         isLoading: false,
-        error: error.message || 'Transaction failed',
+        error: error.message || 'Deposit transaction failed',
         deployHash: null,
       });
       return null;
@@ -53,8 +71,7 @@ export const useTransaction = () => {
   };
 
   /**
-   * Execute a withdrawal transaction (placeholder)
-   * TODO: Implement with casper-js-sdk v5
+   * Execute a withdrawal transaction
    */
   const withdraw = async (sharesCspr: string) => {
     if (!activeAccount) {
@@ -62,27 +79,37 @@ export const useTransaction = () => {
       return null;
     }
 
-    setState({ isLoading: true, error: null, deployHash: null });
+    if (!provider) {
+      setState(prev => ({ ...prev, error: 'Wallet provider not available' }));
+      return null;
+    }
 
     try {
-      // TODO: Implement actual transaction
-      console.log('Withdraw transaction:', { sharesCspr, publicKey: activeAccount.public_key });
+      console.log('🚀 Starting withdraw transaction...');
+      console.log('Public Key:', activeAccount.public_key);
+      console.log('Shares:', sharesCspr);
 
-      // Simulate transaction (remove this when implementing real transaction)
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setState({ status: 'preparing', isLoading: true, error: null, deployHash: null });
 
-      setState({
-        isLoading: false,
-        error: 'Transaction support coming soon',
-        deployHash: null,
-      });
+      // Create deploy
+      const deploy = createWithdrawDeploy(activeAccount.public_key, sharesCspr);
+      console.log('✅ Deploy created');
 
-      return null;
+      setState({ status: 'signing', isLoading: true, error: null, deployHash: null });
+
+      // Sign and submit
+      const deployHash = await signAndSubmitDeploy(deploy, provider);
+      console.log('✅ Deploy submitted:', deployHash);
+
+      setState({ status: 'success', isLoading: false, error: null, deployHash });
+
+      return deployHash;
     } catch (error: any) {
-      console.error('Withdraw failed:', error);
+      console.error('❌ Withdraw failed:', error);
       setState({
+        status: 'error',
         isLoading: false,
-        error: error.message || 'Transaction failed',
+        error: error.message || 'Withdraw transaction failed',
         deployHash: null,
       });
       return null;
@@ -94,6 +121,7 @@ export const useTransaction = () => {
    */
   const reset = () => {
     setState({
+      status: 'idle',
       isLoading: false,
       error: null,
       deployHash: null,

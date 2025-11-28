@@ -1,10 +1,54 @@
 import { useWallet } from '../hooks/useWallet';
 
+// DEMO TRANSACTION DATA - Replace with real data from backend in Phase 3
+const DEMO_TRANSACTIONS = [
+  {
+    id: '1',
+    type: 'deposit',
+    amount: '500.00',
+    apy: '12.5',
+    date: 'Nov 27, 2025',
+    status: 'confirmed'
+  },
+  {
+    id: '2',
+    type: 'deposit',
+    amount: '300.00',
+    apy: '13.2',
+    date: 'Nov 25, 2025',
+    status: 'confirmed'
+  },
+  {
+    id: '3',
+    type: 'withdraw',
+    amount: '150.00',
+    apy: '12.8',
+    date: 'Nov 23, 2025',
+    status: 'confirmed'
+  },
+  {
+    id: '4',
+    type: 'deposit',
+    amount: '750.00',
+    apy: '11.9',
+    date: 'Nov 20, 2025',
+    status: 'confirmed'
+  },
+  {
+    id: '5',
+    type: 'deposit',
+    amount: '200.00',
+    apy: '12.1',
+    date: 'Nov 18, 2025',
+    status: 'confirmed'
+  }
+];
+
 export const PositionHistory = () => {
   const { isConnected } = useWallet();
 
-  // TODO: Fetch real history from backend
-  const history: any[] = [];
+  // Using demo data for now - will be replaced with real API calls in Phase 3
+  const history = isConnected ? DEMO_TRANSACTIONS : [];
 
   if (!isConnected) {
     return (
@@ -36,11 +80,11 @@ export const PositionHistory = () => {
               </tr>
             </thead>
             <tbody>
-              {history.map((tx: any) => (
-                <tr key={tx.id} className="border-b border-gray-700">
+              {history.map((tx) => (
+                <tr key={tx.id} className="border-b border-gray-700 hover:bg-gray-800/50 transition-colors">
                   <td className="py-4">
                     <span
-                      className={`px-2 py-1 rounded text-xs ${
+                      className={`px-2 py-1 rounded text-xs font-medium uppercase ${
                         tx.type === 'deposit'
                           ? 'bg-green-900 text-green-300'
                           : 'bg-red-900 text-red-300'
@@ -49,11 +93,13 @@ export const PositionHistory = () => {
                       {tx.type}
                     </span>
                   </td>
-                  <td className="py-4 font-mono">{tx.amount} CSPR</td>
-                  <td className="py-4">{tx.apy}%</td>
+                  <td className="py-4 font-mono font-semibold">{tx.amount} CSPR</td>
+                  <td className="py-4 text-green-400">{tx.apy}%</td>
                   <td className="py-4 text-gray-400">{tx.date}</td>
                   <td className="py-4">
-                    <span className="text-green-500">✓ Confirmed</span>
+                    <span className="text-green-500 flex items-center gap-1">
+                      <span className="text-lg">✓</span> Confirmed
+                    </span>
                   </td>
                 </tr>
               ))}
