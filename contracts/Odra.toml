@@ -1,0 +1,12 @@
+[workspace]
+members = ["yield-optimizer"]
+
+[[workspace.contracts]]
+name = "YieldOptimizer"
+# Path is optional if the contract is in the default location (src/)
+fqn = "yield_optimizer::YieldOptimizer"
+
+[casper]
+node_address = "https://rpc.testnet.casperlabs.io"
+chain_name = "casper-test"
+secret_key_path = "./secret_key.pem"
