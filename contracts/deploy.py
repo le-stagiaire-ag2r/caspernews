@@ -8,11 +8,12 @@ import base64
 from pathlib import Path
 
 try:
-    from pycspr import NodeClient, NodeRpcClient
+    from pycspr import NodeRpcClient
     from pycspr.crypto import KeyAlgorithm
     from pycspr.types import Deploy, DeployParameters, PublicKey, PrivateKey
-except ImportError:
-    print("❌ pycspr not installed. Install with: pip3 install pycspr")
+except ImportError as e:
+    print(f"❌ pycspr import error: {e}")
+    print("Install with: pip3 install pycspr --break-system-packages")
     exit(1)
 
 # Configuration
