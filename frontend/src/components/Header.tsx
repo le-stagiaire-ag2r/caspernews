@@ -1,10 +1,22 @@
 import { useWallet } from '../hooks/useWallet';
 
 export const Header = () => {
-  const { activeAccount, isConnected } = useWallet();
+  const { activeAccount, isConnected, clickRef } = useWallet();
 
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+
+  const handleConnect = () => {
+    if (clickRef) {
+      clickRef.signIn();
+    }
+  };
+
+  const handleDisconnect = () => {
+    if (clickRef) {
+      clickRef.signOut();
+    }
   };
 
   return (
@@ -28,11 +40,20 @@ export const Header = () => {
                   {formatAddress(activeAccount.public_key)}
                 </span>
               </div>
+              <button
+                onClick={handleDisconnect}
+                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors text-sm"
+              >
+                Disconnect
+              </button>
             </div>
           ) : (
-            <div className="text-sm text-gray-400">
-              Connect your wallet to get started
-            </div>
+            <button
+              onClick={handleConnect}
+              className="px-6 py-2 bg-casper-red hover:bg-red-600 text-white font-semibold rounded-lg transition-colors shadow-lg hover:shadow-xl"
+            >
+              Connect Wallet
+            </button>
           )}
         </div>
       </div>
