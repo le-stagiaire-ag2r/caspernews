@@ -61,9 +61,9 @@ export const createDepositDeploy = (
   // Create contract hash from string - remove 'hash-' prefix if present
   console.log('📋 Original CONTRACT_HASH:', CONTRACT_HASH);
   console.log('📋 CONTRACT_HASH length:', CONTRACT_HASH.length);
-  const hashHex = CONTRACT_HASH.startsWith('hash-')
+  const hashHex = (CONTRACT_HASH.startsWith('hash-')
     ? CONTRACT_HASH.substring(5)
-    : CONTRACT_HASH;
+    : CONTRACT_HASH).trim(); // Remove whitespace/newlines
   console.log('📋 Cleaned hashHex:', hashHex);
   console.log('📋 hashHex length:', hashHex.length);
   const contractHash = ContractHash.newContract(hashHex);
@@ -115,9 +115,9 @@ export const createWithdrawDeploy = (
   // Create contract hash from string - remove 'hash-' prefix if present
   console.log('📋 Original CONTRACT_HASH:', CONTRACT_HASH);
   console.log('📋 CONTRACT_HASH length:', CONTRACT_HASH.length);
-  const hashHex = CONTRACT_HASH.startsWith('hash-')
+  const hashHex = (CONTRACT_HASH.startsWith('hash-')
     ? CONTRACT_HASH.substring(5)
-    : CONTRACT_HASH;
+    : CONTRACT_HASH).trim(); // Remove whitespace/newlines
   console.log('📋 Cleaned hashHex:', hashHex);
   console.log('📋 hashHex length:', hashHex.length);
   const contractHash = ContractHash.newContract(hashHex);
