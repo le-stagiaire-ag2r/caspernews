@@ -196,13 +196,25 @@ export const signAndSubmitDeploy = async (
     deploy.approvals.push(approval);
 
     console.log('✅ Signature added to deploy');
+    console.log('📋 Deploy approvals count:', deploy.approvals.length);
+    console.log('📋 Deploy hash:', deploy.hash.toHex());
+    console.log('📋 Submitting to RPC:', RPC_URL);
 
     // Submit to network
-    const result = await rpcClient.putDeploy(deploy);
-
-    const deployHashString = result.deployHash.toHex();
-    console.log('✅ Deploy submitted:', deployHashString);
-    return deployHashString;
+    try {
+      const result = await rpcClient.putDeploy(deploy);
+      const deployHashString = result.deployHash.toHex();
+      console.log('✅ Deploy submitted:', deployHashString);
+      return deployHashString;
+    } catch (rpcError: any) {
+      console.error('❌ RPC putDeploy failed:', rpcError);
+      console.error('❌ RPC error details:', {
+        message: rpcError.message,
+        stack: rpcError.stack,
+        name: rpcError.name,
+      });
+      throw rpcError;
+    }
   } catch (error) {
     console.error('❌ Deploy submission failed:', error);
     throw error;
