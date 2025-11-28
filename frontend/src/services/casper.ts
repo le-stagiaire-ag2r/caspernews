@@ -165,22 +165,18 @@ export const signAndSubmitDeploy = async (
     // Serialize deploy for signing
     const deployJson = Deploy.toJSON(deploy);
 
-    // Sign with wallet provider
-    const signedDeployJson = await walletProvider.sign(
+    console.log('📤 Sending deploy to wallet for signing...');
+
+    // Sign with wallet provider - it returns the signed deploy directly
+    const signedDeploy = await walletProvider.sign(
       JSON.stringify(deployJson),
       deploy.header.account!.toHex()
     );
 
-    // Parse signed deploy - handle both string and object returns
-    let parsedSignedDeploy;
-    if (typeof signedDeployJson === 'string') {
-      parsedSignedDeploy = JSON.parse(signedDeployJson);
-    } else {
-      parsedSignedDeploy = signedDeployJson;
-    }
+    console.log('✅ Deploy signed by wallet');
+    console.log('📋 Signed deploy type:', typeof signedDeploy);
 
-    const signedDeploy = Deploy.fromJSON(parsedSignedDeploy);
-
+    // The wallet provider returns a Deploy object directly, not JSON
     // Submit to network
     const result = await rpcClient.putDeploy(signedDeploy);
 
