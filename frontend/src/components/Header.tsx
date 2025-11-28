@@ -1,7 +1,7 @@
-import { useClick } from '@make-software/csprclick-ui';
+import { useWallet } from '../hooks/useWallet';
 
 export const Header = () => {
-  const { activeAccount, isConnected } = useClick();
+  const { activeAccount, isConnected } = useWallet();
 
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;

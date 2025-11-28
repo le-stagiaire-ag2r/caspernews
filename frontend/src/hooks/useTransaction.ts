@@ -1,12 +1,5 @@
 import { useState } from 'react';
-import { useClick } from '@make-software/csprclick-ui';
-import {
-  createDepositDeploy,
-  createWithdrawDeploy,
-  csprToMotes,
-  submitDeploy,
-} from '../services/casper';
-import { DeployUtil } from 'casper-js-sdk';
+import { useWallet } from './useWallet';
 
 export interface TransactionState {
   isLoading: boolean;
@@ -15,7 +8,7 @@ export interface TransactionState {
 }
 
 export const useTransaction = () => {
-  const { activeAccount, signDeploy } = useClick();
+  const { activeAccount } = useWallet();
   const [state, setState] = useState<TransactionState>({
     isLoading: false,
     error: null,
@@ -23,7 +16,8 @@ export const useTransaction = () => {
   });
 
   /**
-   * Execute a deposit transaction
+   * Execute a deposit transaction (placeholder)
+   * TODO: Implement with casper-js-sdk v5
    */
   const deposit = async (amountCspr: string) => {
     if (!activeAccount) {
@@ -34,44 +28,19 @@ export const useTransaction = () => {
     setState({ isLoading: true, error: null, deployHash: null });
 
     try {
-      // Convert CSPR to motes
-      const amountMotes = csprToMotes(amountCspr);
+      // TODO: Implement actual transaction
+      console.log('Deposit transaction:', { amountCspr, publicKey: activeAccount.public_key });
 
-      console.log('Creating deposit deploy:', {
-        publicKey: activeAccount.public_key,
-        amountCspr,
-        amountMotes,
-      });
-
-      // Create the deploy
-      const deploy = createDepositDeploy(
-        activeAccount.public_key,
-        amountMotes,
-      );
-
-      console.log('Deploy created, requesting signature...');
-
-      // Sign the deploy with connected wallet
-      const signedDeploy = await signDeploy(deploy);
-
-      if (!signedDeploy) {
-        throw new Error('User rejected transaction');
-      }
-
-      console.log('Deploy signed, submitting to network...');
-
-      // Submit to the network
-      const deployHash = await submitDeploy(signedDeploy as unknown as DeployUtil.Deploy);
-
-      console.log('Deploy submitted successfully:', deployHash);
+      // Simulate transaction (remove this when implementing real transaction)
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       setState({
         isLoading: false,
-        error: null,
-        deployHash,
+        error: 'Transaction support coming soon',
+        deployHash: null,
       });
 
-      return deployHash;
+      return null;
     } catch (error: any) {
       console.error('Deposit failed:', error);
       setState({
@@ -84,7 +53,8 @@ export const useTransaction = () => {
   };
 
   /**
-   * Execute a withdrawal transaction
+   * Execute a withdrawal transaction (placeholder)
+   * TODO: Implement with casper-js-sdk v5
    */
   const withdraw = async (sharesCspr: string) => {
     if (!activeAccount) {
@@ -95,41 +65,19 @@ export const useTransaction = () => {
     setState({ isLoading: true, error: null, deployHash: null });
 
     try {
-      // Convert CSPR to motes for shares
-      const sharesMotes = csprToMotes(sharesCspr);
+      // TODO: Implement actual transaction
+      console.log('Withdraw transaction:', { sharesCspr, publicKey: activeAccount.public_key });
 
-      console.log('Creating withdraw deploy:', {
-        publicKey: activeAccount.public_key,
-        sharesCspr,
-        sharesMotes,
-      });
-
-      const deploy = createWithdrawDeploy(
-        activeAccount.public_key,
-        sharesMotes,
-      );
-
-      console.log('Deploy created, requesting signature...');
-
-      const signedDeploy = await signDeploy(deploy);
-
-      if (!signedDeploy) {
-        throw new Error('User rejected transaction');
-      }
-
-      console.log('Deploy signed, submitting to network...');
-
-      const deployHash = await submitDeploy(signedDeploy as unknown as DeployUtil.Deploy);
-
-      console.log('Deploy submitted successfully:', deployHash);
+      // Simulate transaction (remove this when implementing real transaction)
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       setState({
         isLoading: false,
-        error: null,
-        deployHash,
+        error: 'Transaction support coming soon',
+        deployHash: null,
       });
 
-      return deployHash;
+      return null;
     } catch (error: any) {
       console.error('Withdraw failed:', error);
       setState({

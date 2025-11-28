@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchPoolStats } from '../services/api';
-import { useClick } from '@make-software/csprclick-ui';
+import { useWallet } from '../hooks/useWallet';
 import { motesToCspr } from '../services/casper';
 
 export const Dashboard = () => {
-  const { activeAccount } = useClick();
+  const { activeAccount } = useWallet();
 
   // Fetch pool statistics from backend
   const { data: stats, isLoading } = useQuery({

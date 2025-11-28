@@ -22,111 +22,140 @@ This guide explains how to deploy the smart contracts to Casper Testnet.
 cargo install cargo-odra
 ```
 
-## Step 2: Build Contracts
-
-From the `contracts/` directory:
-
+Verify installation:
 ```bash
-cargo odra build
+cargo odra --version
 ```
 
-This will compile the smart contracts to WebAssembly format.
-
-## Step 3: Deploy to Testnet
-
-### Option A: Using Node.js Script (Recommended)
+## Step 2: Build the Smart Contracts
 
 ```bash
 cd contracts
-npm install
-node deploy-final.js
+cargo odra build -b casper
 ```
 
-### Option B: Using casper-client CLI
+This will compile the Odra contracts to Wasm format for Casper.
 
-If you have `casper-client` installed:
+## Step 3: Create Secret Key File
+
+Create a file `contracts/secret_key.pem` with your private key:
 
 ```bash
-casper-client put-deploy \
-  --node-address https://rpc.testnet.casperlabs.io \
-  --chain-name casper-test \
-  --secret-key ./contracts/secret_key.pem \
-  --payment-amount 200000000000 \
-  --session-path ./contracts/wasm/YieldOptimizer.wasm \
-  --session-arg "management_fee_bp:u32='100'"
+# This file is in .gitignore - never commit it!
+# Format: base64 encoded Ed25519 private key
 ```
 
-### Option C: Manual Deployment via Explorer
+## Step 4: Deploy to Testnet
 
-1. Visit https://testnet.cspr.live/deploy-contract
-2. Upload `contracts/wasm/YieldOptimizer.wasm`
-3. Set payment amount: 200 CSPR
-4. Add init argument: `management_fee_bp` (U32) = 100
-5. Sign with your wallet
-
-The deployment will return a **deploy hash**. Save it!
-
-## Step 4: Configure Environment Variables
-
-After deployment, update the environment variables:
-
-**Frontend** (`frontend/.env`):
+```bash
+cargo odra deploy \
+  -b casper \
+  -n casper-test \
+  --secret-key ./secret_key.pem
 ```
-VITE_CONTRACT_HASH=hash-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+Or using environment variable:
+```bash
+export ODRA_CASPER_LIVENET_SECRET_KEY_PATH=./secret_key.pem
+cargo odra deploy -b casper -n casper-test
+```
+
+## Step 5: Save Contract Hash
+
+After successful deployment, you'll see output like:
+```
+Contract deployed successfully!
+Contract hash: hash-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+**Save this hash!** You'll need it for configuration.
+
+### ✅ Deployed Contract Information
+
+**Status:** Successfully deployed to Casper Testnet!
+
+- **Package Hash:** `hash-f49d339a1e82cb95cc1ce2eea5c0c7589e8694d3678d0ab9432e57ea00e1d1df`
+- **Deploy Hash:** `697df7c33b8495b2db4c81f3ecf7faeab2fd65e9d2986beac97e0e496ea325f6`
+- **Explorer:** https://testnet.cspr.live/deploy/697df7c33b8495b2db4c81f3ecf7faeab2fd65e9d2986beac97e0e496ea325f6
+- **Account:** https://testnet.cspr.live/account/01854e96435611f12bdf9fe5136b338122d1b53e83dd04261a52966edc1099166f
+- **Cost:** ~321.44 CSPR
+- **Deployed:** November 28, 2025
+
+## Step 6: Configure Environment Variables
+
+### Frontend (.env)
+```env
+VITE_CONTRACT_HASH=hash-f49d339a1e82cb95cc1ce2eea5c0c7589e8694d3678d0ab9432e57ea00e1d1df
 VITE_CASPER_NETWORK=casper-test
-VITE_RPC_URL=https://rpc.testnet.casperlabs.io
+VITE_CASPER_RPC_URL=https://rpc.testnet.casperlabs.io/rpc
+VITE_API_URL=http://localhost:3001/api
 ```
 
-**Backend** (`backend/.env`):
-```
-CONTRACT_HASH=hash-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-CSPR_CLOUD_WS_URL=wss://api.testnet.casperlabs.io/events
+### Backend (.env)
+```env
+CONTRACT_HASH=hash-f49d339a1e82cb95cc1ce2eea5c0c7589e8694d3678d0ab9432e57ea00e1d1df
+CSPR_CLOUD_STREAMING_URL=wss://streaming.testnet.cspr.cloud
+PORT=3001
+DATABASE_PATH=./data/optimizer.db
 ```
 
-## Step 5: Test Deployment
+## Step 7: Verify Deployment
 
-Test the deployment by calling a read-only method:
+Check your contract on Casper Explorer:
+```
+https://testnet.cspr.live/contract/[YOUR_CONTRACT_HASH]
+```
+
+## Step 8: Test Contract Calls
+
+You can test contract calls using cargo-odra:
 
 ```bash
-casper-client query-global-state \
-  --node-address https://rpc.testnet.casperlabs.io \
-  --state-root-hash $(casper-client get-state-root-hash --node-address https://rpc.testnet.casperlabs.io | jq -r '.result.state_root_hash') \
-  --key hash-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# Get TVL
+cargo odra call -b casper -n casper-test \
+  --contract-hash hash-xxxxx \
+  --entry-point get_tvl
+
+# Get owner
+cargo odra call -b casper -n casper-test \
+  --contract-hash hash-xxxxx \
+  --entry-point get_owner
 ```
+
+## Deployment Costs
+
+Approximate gas costs on testnet:
+- Contract deployment: ~50-100 CSPR
+- Contract initialization: ~10 CSPR
+- Deposit transaction: ~5 CSPR
+- Withdrawal transaction: ~7 CSPR
 
 ## Troubleshooting
 
-### Insufficient Balance
+### "Insufficient funds"
+- Check your balance: https://testnet.cspr.live/account/[YOUR_ACCOUNT_HASH]
+- Get more testnet CSPR: https://testnet.cspr.live/tools/faucet
 
-If you get an "insufficient balance" error, ensure you have at least 100 CSPR testnet tokens.
+### "Contract already exists"
+- This is normal if redeploying
+- Each deployment creates a new contract instance
+- Update the contract hash in your .env files
 
-### Invalid Key Format
+### "Invalid key format"
+- Ensure your secret_key.pem is in the correct format
+- Try regenerating from your wallet
 
-Ensure your `secret_key.pem` is in the correct PEM format:
+## Security Notes
 
-```
------BEGIN PRIVATE KEY-----
-[base64 encoded key]
------END PRIVATE KEY-----
-```
+- Never commit `secret_key.pem` to git (it's in .gitignore)
+- For mainnet, use a hardware wallet or secure key management
+- Test thoroughly on testnet before mainnet deployment
 
-### Network Issues
+## Next Steps
 
-If deployment times out, try:
-1. Check your internet connection
-2. Verify the RPC endpoint is accessible: `curl https://rpc.testnet.casperlabs.io/rpc`
-3. Wait a few minutes and retry
-
-## Verify on Block Explorer
-
-After deployment, you can view your contract on the testnet block explorer:
-
-https://testnet.cspr.live/contract/[your-contract-hash]
-
-## Gas Costs
-
-Typical gas costs on Casper Testnet:
-- Contract deployment: 50-100 CSPR
-- Deposit transaction: 5 CSPR
-- Withdraw transaction: 7 CSPR
-- Rebalance: 10-15 CSPR
+After deployment:
+1. Update .env files with contract hash
+2. Start backend: `cd backend && npm run dev`
+3. Start frontend: `cd frontend && npm run dev`
+4. Test deposit/withdraw functionality
+5. Monitor transactions on Casper Explorer

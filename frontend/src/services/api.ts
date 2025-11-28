@@ -86,7 +86,7 @@ export const refreshStats = async (): Promise<PoolStats> => {
 /**
  * Get account balance (from Casper RPC)
  */
-export const getAccountBalance = async (publicKey: string): Promise<string> => {
+export const getAccountBalance = async (_publicKey: string): Promise<string> => {
   // This would typically call Casper RPC to get balance
   // For now, returning placeholder
   // TODO: Implement real balance fetching

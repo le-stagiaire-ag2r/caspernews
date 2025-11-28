@@ -1,7 +1,7 @@
-import { useClick } from '@make-software/csprclick-ui';
+import { useWallet } from '../hooks/useWallet';
 
 export const PositionHistory = () => {
-  const { isConnected } = useClick();
+  const { isConnected } = useWallet();
 
   // TODO: Fetch real history from backend
   const history: any[] = [];
