@@ -176,6 +176,7 @@ export const signAndSubmitDeploy = async (
     console.log('✅ Deploy signed by wallet');
     console.log('📋 Signed deploy data type:', typeof signedDeployData);
     console.log('📋 Signed deploy data keys:', Object.keys(signedDeployData || {}));
+    console.log('📋 Signed deploy data:', JSON.stringify(signedDeployData, null, 2));
     console.log('📋 Is string?', typeof signedDeployData === 'string');
 
     // Try to parse if it's a string, otherwise use directly
@@ -190,9 +191,18 @@ export const signAndSubmitDeploy = async (
         console.log('📋 Already a Deploy instance');
         deployToSubmit = signedDeployData;
       } else {
-        // Try to use it directly without fromJSON conversion
-        console.log('📋 Using signed deploy directly');
-        deployToSubmit = signedDeployData;
+        // Check if it's a wrapper object with a 'deploy' field
+        if ('deploy' in signedDeployData) {
+          console.log('📋 Found deploy field in response, extracting...');
+          deployToSubmit = Deploy.fromJSON(signedDeployData.deploy);
+        } else if ('signedDeploy' in signedDeployData) {
+          console.log('📋 Found signedDeploy field in response, extracting...');
+          deployToSubmit = Deploy.fromJSON(signedDeployData.signedDeploy);
+        } else {
+          // Try to use it directly as a deploy JSON
+          console.log('📋 Attempting to parse as deploy JSON');
+          deployToSubmit = Deploy.fromJSON(signedDeployData);
+        }
       }
     } else {
       throw new Error('Unexpected signed deploy data format');
