@@ -1,0 +1,15 @@
+# Secret keys
+*.pem
+.env
+
+# Node
+node_modules/
+package-lock.json
+
+# Rust/Cargo
+target/
+Cargo.lock
+
+# Build artifacts
+wasm/
+resources/
