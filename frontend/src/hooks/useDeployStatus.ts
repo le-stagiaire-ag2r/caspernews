@@ -63,8 +63,9 @@ export const useDeployStatus = (deployHash: string | null) => {
       }
     },
     enabled: !!deployHash,
-    refetchInterval: (data) => {
+    refetchInterval: (query) => {
       // Refetch every 5 seconds while pending, stop when success/failed
+      const data = query.state.data;
       if (data && data.status === 'pending') {
         return 5000;
       }
