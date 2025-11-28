@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import { useClickRef } from '@make-software/csprclick-ui';
+import { useState } from 'react';
 
 export interface WalletAccount {
   public_key: string;
@@ -7,50 +6,11 @@ export interface WalletAccount {
 }
 
 export const useWallet = () => {
-  const clickRef = useClickRef();
   const [activeAccount, setActiveAccount] = useState<WalletAccount | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [provider, setProvider] = useState<any>(null);
 
-  useEffect(() => {
-    if (!clickRef) return;
-
-    const handleSignedIn = (evt: any) => {
-      if (evt.detail?.account) {
-        setActiveAccount({
-          public_key: evt.detail.account.public_key,
-          name: evt.detail.account.name,
-        });
-        setIsConnected(true);
-      }
-    };
-
-    const handleSwitchedAccount = (evt: any) => {
-      if (evt.detail?.account) {
-        setActiveAccount({
-          public_key: evt.detail.account.public_key,
-          name: evt.detail.account.name,
-        });
-      }
-    };
-
-    const handleSignedOut = () => {
-      setActiveAccount(null);
-      setIsConnected(false);
-    };
-
-    clickRef.on('csprclick:signed_in', handleSignedIn);
-    clickRef.on('csprclick:switched_account', handleSwitchedAccount);
-    clickRef.on('csprclick:signed_out', handleSignedOut);
-
-    return () => {
-      clickRef.off('csprclick:signed_in', handleSignedIn);
-      clickRef.off('csprclick:switched_account', handleSwitchedAccount);
-      clickRef.off('csprclick:signed_out', handleSignedOut);
-    };
-  }, [clickRef]);
-
-  // Direct wallet connection (fallback if clickRef doesn't work)
+  // Direct wallet connection using native Casper wallet providers
   const connectDirectWallet = async () => {
     try {
       console.log('🔍 Attempting wallet connection...');
@@ -108,7 +68,6 @@ export const useWallet = () => {
   };
 
   return {
-    clickRef,
     activeAccount,
     isConnected,
     provider,
