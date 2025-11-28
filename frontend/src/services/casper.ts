@@ -10,6 +10,8 @@ import {
   ContractHash,
   RpcClient,
   HttpHandler,
+  Approval,
+  HexBytes,
 } from 'casper-js-sdk';
 
 export const CASPER_NETWORK_NAME = import.meta.env.VITE_CASPER_NETWORK || 'casper-test';
@@ -167,51 +169,36 @@ export const signAndSubmitDeploy = async (
 
     console.log('📤 Sending deploy to wallet for signing...');
 
-    // Sign with wallet provider
-    const signedDeployData = await walletProvider.sign(
+    // Sign with wallet provider - it returns just the signature, not the full deploy
+    const signatureResponse = await walletProvider.sign(
       JSON.stringify(deployJson),
       deploy.header.account!.toHex()
     );
 
-    console.log('✅ Deploy signed by wallet');
-    console.log('📋 Signed deploy data type:', typeof signedDeployData);
-    console.log('📋 Signed deploy data keys:', Object.keys(signedDeployData || {}));
-    console.log('📋 Signed deploy data:', JSON.stringify(signedDeployData, null, 2));
-    console.log('📋 Is string?', typeof signedDeployData === 'string');
+    console.log('✅ Signature received from wallet');
+    console.log('📋 Signature hex:', signatureResponse.signatureHex);
 
-    // Try to parse if it's a string, otherwise use directly
-    let deployToSubmit;
-    if (typeof signedDeployData === 'string') {
-      // Parse the JSON string first
-      const parsedData = JSON.parse(signedDeployData);
-      deployToSubmit = Deploy.fromJSON(parsedData);
-    } else if (signedDeployData && typeof signedDeployData === 'object') {
-      // Check if it's already a Deploy instance
-      if (signedDeployData.constructor && signedDeployData.constructor.name === 'Deploy') {
-        console.log('📋 Already a Deploy instance');
-        deployToSubmit = signedDeployData;
-      } else {
-        // Check if it's a wrapper object with a 'deploy' field
-        if ('deploy' in signedDeployData) {
-          console.log('📋 Found deploy field in response, extracting...');
-          deployToSubmit = Deploy.fromJSON(signedDeployData.deploy);
-        } else if ('signedDeploy' in signedDeployData) {
-          console.log('📋 Found signedDeploy field in response, extracting...');
-          deployToSubmit = Deploy.fromJSON(signedDeployData.signedDeploy);
-        } else {
-          // Try to use it directly as a deploy JSON
-          console.log('📋 Attempting to parse as deploy JSON');
-          deployToSubmit = Deploy.fromJSON(signedDeployData);
-        }
-      }
-    } else {
-      throw new Error('Unexpected signed deploy data format');
+    if (signatureResponse.cancelled) {
+      throw new Error('User cancelled the signing request');
     }
 
-    console.log('✅ Deploy ready for submission');
+    // Add the signature to the original deploy
+    // The signature bytes are in the 'signature' field
+    const signatureBytes = new Uint8Array(Object.values(signatureResponse.signature));
+
+    // Create a HexBytes object from the signature
+    const signature = new HexBytes(signatureBytes);
+
+    // Create an Approval with the signer's public key and signature
+    const approval = new Approval(deploy.header.account!, signature);
+
+    // Add the approval to the deploy's approvals list
+    deploy.approvals.push(approval);
+
+    console.log('✅ Signature added to deploy');
 
     // Submit to network
-    const result = await rpcClient.putDeploy(deployToSubmit);
+    const result = await rpcClient.putDeploy(deploy);
 
     const deployHashString = result.deployHash.toHex();
     console.log('✅ Deploy submitted:', deployHashString);
