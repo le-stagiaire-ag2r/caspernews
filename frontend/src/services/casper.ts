@@ -204,7 +204,7 @@ export const signAndSubmitDeploy = async (
     // Submit to network using manual JSON-RPC call
     try {
       // Serialize the signed deploy to JSON
-      const signedDeployJson = Deploy.toJSON(deploy);
+      const signedDeployJson = Deploy.toJSON(deploy) as any;
       console.log('📋 Signed deploy JSON prepared');
       console.log('📋 Deploy JSON keys:', Object.keys(signedDeployJson));
       console.log('📋 Deploy JSON header:', signedDeployJson.header);
