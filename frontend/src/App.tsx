@@ -23,7 +23,7 @@ const queryClient = new QueryClient({
 const csprClickOptions = {
   appName: 'CasperNews DeFi',
   appId: CSPR_CLICK_APP_ID,
-  contentMode: 'iframe' as const,
+  contentMode: 'popup' as const,
   providers: ['casper-wallet', 'ledger', 'metamask-snap', 'torus-wallet'],
 };
 
