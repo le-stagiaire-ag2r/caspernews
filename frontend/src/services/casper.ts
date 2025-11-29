@@ -207,13 +207,13 @@ export const signAndSubmitDeploy = async (
       // Helper function to serialize ExecutableDeployItem
       const serializeExecutableItem = (item: ExecutableDeployItem): any => {
         if (item.moduleBytes) {
-          return { ModuleBytes: { module_bytes: item.moduleBytes.toHex(), args: item.moduleBytes.args.toBytes() } };
+          return { ModuleBytes: { module_bytes: Array.from(item.moduleBytes.moduleBytes), args: Array.from(item.moduleBytes.args.toBytes()) } };
         } else if (item.storedContractByHash) {
           return {
             StoredContractByHash: {
-              hash: item.storedContractByHash.hash.toHex(),
+              hash: item.storedContractByHash.hash.hash,
               entry_point: item.storedContractByHash.entryPoint,
-              args: item.storedContractByHash.args.toBytes()
+              args: Array.from(item.storedContractByHash.args.toBytes())
             }
           };
         } else if (item.storedContractByName) {
@@ -221,16 +221,16 @@ export const signAndSubmitDeploy = async (
             StoredContractByName: {
               name: item.storedContractByName.name,
               entry_point: item.storedContractByName.entryPoint,
-              args: item.storedContractByName.args.toBytes()
+              args: Array.from(item.storedContractByName.args.toBytes())
             }
           };
         } else if (item.storedVersionedContractByHash) {
           return {
             StoredVersionedContractByHash: {
-              hash: item.storedVersionedContractByHash.hash.toHex(),
+              hash: item.storedVersionedContractByHash.hash.hash,
               version: item.storedVersionedContractByHash.version,
               entry_point: item.storedVersionedContractByHash.entryPoint,
-              args: item.storedVersionedContractByHash.args.toBytes()
+              args: Array.from(item.storedVersionedContractByHash.args.toBytes())
             }
           };
         } else if (item.storedVersionedContractByName) {
@@ -239,11 +239,11 @@ export const signAndSubmitDeploy = async (
               name: item.storedVersionedContractByName.name,
               version: item.storedVersionedContractByName.version,
               entry_point: item.storedVersionedContractByName.entryPoint,
-              args: item.storedVersionedContractByName.args.toBytes()
+              args: Array.from(item.storedVersionedContractByName.args.toBytes())
             }
           };
         } else if (item.transfer) {
-          return { Transfer: { args: item.transfer.args.toBytes() } };
+          return { Transfer: { args: Array.from(item.transfer.args.toBytes()) } };
         }
         throw new Error('Unknown ExecutableDeployItem type');
       };
