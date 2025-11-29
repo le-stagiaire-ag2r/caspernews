@@ -17,10 +17,17 @@ const queryClient = new QueryClient({
   },
 });
 
+const csprClickOptions = {
+  appName: 'CasperNews DeFi',
+  appId: CSPR_CLICK_APP_ID,
+  contentMode: 'iframe' as const,
+  providers: ['casper-wallet', 'ledger', 'metamask-snap', 'torus-wallet'],
+};
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ClickProvider appId={CSPR_CLICK_APP_ID}>
+      <ClickProvider options={csprClickOptions}>
         <WalletProvider>
           <div className="min-h-screen bg-casper-dark">
           <Header />
