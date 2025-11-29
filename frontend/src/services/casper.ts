@@ -211,18 +211,16 @@ export const signAndSubmitDeploy = async (
       console.log('📋 Deploy JSON header:', signedDeployJson.header);
       console.log('📋 Deploy JSON approvals:', signedDeployJson.approvals);
 
-      // Create JSON-RPC request
+      // Create JSON-RPC request - params should be an array with the deploy
       const rpcRequest = {
         jsonrpc: '2.0',
         method: 'account_put_deploy',
-        params: {
-          deploy: signedDeployJson
-        },
+        params: [signedDeployJson],  // Array format, not object
         id: 1
       };
 
       console.log('📋 Sending JSON-RPC request to:', RPC_URL);
-      console.log('📋 Request params keys:', Object.keys(rpcRequest.params.deploy));
+      console.log('📋 Request params:', rpcRequest.params);
 
       // Send request to our proxy endpoint
       const response = await fetch(RPC_URL, {
