@@ -8,6 +8,9 @@ import { PositionHistory } from './components/PositionHistory';
 
 const CSPR_CLICK_APP_ID = import.meta.env.VITE_CSPR_CLICK_APP_ID || '4f5baf79-a4d3-4efc-b778-eea95fae';
 
+console.log('🔧 CSPR.click App ID:', CSPR_CLICK_APP_ID);
+console.log('🌍 Environment:', import.meta.env.MODE);
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
