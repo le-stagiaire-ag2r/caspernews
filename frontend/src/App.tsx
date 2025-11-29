@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ClickProvider, ClickUI } from '@make-software/csprclick-ui';
+import { ClickProvider } from '@make-software/csprclick-ui';
 import { WalletProvider } from './hooks/useWallet';
 import { Header } from './components/Header';
 import { Dashboard } from './components/Dashboard';
@@ -23,7 +23,7 @@ const queryClient = new QueryClient({
 const csprClickOptions = {
   appName: 'Casper DeFi Yield Optimizer',
   appId: CSPR_CLICK_APP_ID,
-  contentMode: 'iframe' as const,
+  contentMode: 'popup' as const,
   providers: ['casper-wallet', 'ledger', 'metamask-snap', 'torus-wallet'],
 };
 
@@ -31,7 +31,6 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ClickProvider options={csprClickOptions}>
-        <ClickUI />
         <WalletProvider>
           <div className="min-h-screen bg-casper-dark">
           <Header />
