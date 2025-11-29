@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { useClickRef } from '@make-software/csprclick-ui';
-import { TransactionStatus as CSPRClickTransactionStatus } from '@make-software/csprclick-core-types';
+import { useClickWallet } from './useClickWallet';
 import {
-  buildDepositTransaction,
-  buildWithdrawTransaction,
+  createDepositTransaction,
+  createWithdrawTransaction,
 } from '../services/casper';
 
 export type TransactionStatus = 'idle' | 'preparing' | 'signing' | 'submitting' | 'success' | 'error';
@@ -16,8 +15,7 @@ export interface TransactionState {
 }
 
 export const useTransaction = () => {
-  const clickRef = useClickRef();
-  const activeAccount = clickRef?.getActiveAccount();
+  const { activePublicKey, sendTransaction } = useClickWallet();
   const [state, setState] = useState<TransactionState>({
     status: 'idle',
     isLoading: false,
@@ -29,86 +27,34 @@ export const useTransaction = () => {
    * Execute a deposit transaction
    */
   const deposit = async (amountCspr: string) => {
-    if (!activeAccount) {
+    if (!activePublicKey) {
       setState(prev => ({ ...prev, error: 'No wallet connected' }));
-      return null;
-    }
-
-    if (!clickRef) {
-      setState(prev => ({ ...prev, error: 'CSPR.click not initialized' }));
       return null;
     }
 
     try {
       console.log('🚀 Starting deposit transaction...');
-      console.log('Public Key:', activeAccount.public_key);
+      console.log('Public Key:', activePublicKey);
       console.log('Amount:', amountCspr, 'CSPR');
 
       setState({ status: 'preparing', isLoading: true, error: null, deployHash: null });
 
-      // Build transaction
-      const transaction = buildDepositTransaction(
-        activeAccount.public_key.toLowerCase(),
-        amountCspr
-      );
-      console.log('✅ Transaction built');
+      // Create transaction using ContractCallBuilder
+      const transaction = createDepositTransaction(activePublicKey, amountCspr);
+      console.log('✅ Transaction created');
 
       setState({ status: 'signing', isLoading: true, error: null, deployHash: null });
 
-      // Define status callback
-      const onStatusUpdate = (status: string, data: any) => {
-        console.log('📊 Transaction status:', status, data);
+      // Send via CSPR.click
+      setState({ status: 'submitting', isLoading: true, error: null, deployHash: null });
+      const result = await sendTransaction(transaction);
 
-        if (status === CSPRClickTransactionStatus.CANCELLED) {
-          setState({
-            status: 'error',
-            isLoading: false,
-            error: 'Transaction cancelled by user',
-            deployHash: null,
-          });
-        } else if (status === CSPRClickTransactionStatus.ERROR) {
-          setState({
-            status: 'error',
-            isLoading: false,
-            error: data?.error || 'Transaction failed',
-            deployHash: null,
-          });
-        } else if (status === CSPRClickTransactionStatus.SENT) {
-          setState({ status: 'submitting', isLoading: true, error: null, deployHash: null });
-        } else if (status === CSPRClickTransactionStatus.PROCESSED) {
-          if (data.csprCloudTransaction?.error_message === null) {
-            setState({
-              status: 'success',
-              isLoading: false,
-              error: null,
-              deployHash: data.deployHash || data.transactionHash,
-            });
-          } else {
-            setState({
-              status: 'error',
-              isLoading: false,
-              error: data.csprCloudTransaction?.error_message || 'Transaction failed',
-              deployHash: null,
-            });
-          }
-        }
-      };
+      const deployHash = result?.deployHash;
+      console.log('✅ Transaction processed:', deployHash);
 
-      // Send transaction using CSPR.click
-      const result = await clickRef.send(
-        transaction,
-        activeAccount.public_key.toLowerCase(),
-        onStatusUpdate
-      );
+      setState({ status: 'success', isLoading: false, error: null, deployHash: deployHash || null });
 
-      if (result?.transactionHash) {
-        console.log('✅ Transaction submitted:', result.transactionHash);
-        return result.transactionHash;
-      } else if (result?.cancelled) {
-        return null;
-      } else {
-        throw new Error(result?.error || 'Transaction failed');
-      }
+      return deployHash;
     } catch (error: any) {
       console.error('❌ Deposit failed:', error);
       setState({
@@ -125,86 +71,34 @@ export const useTransaction = () => {
    * Execute a withdrawal transaction
    */
   const withdraw = async (sharesCspr: string) => {
-    if (!activeAccount) {
+    if (!activePublicKey) {
       setState(prev => ({ ...prev, error: 'No wallet connected' }));
-      return null;
-    }
-
-    if (!clickRef) {
-      setState(prev => ({ ...prev, error: 'CSPR.click not initialized' }));
       return null;
     }
 
     try {
       console.log('🚀 Starting withdraw transaction...');
-      console.log('Public Key:', activeAccount.public_key);
+      console.log('Public Key:', activePublicKey);
       console.log('Shares:', sharesCspr);
 
       setState({ status: 'preparing', isLoading: true, error: null, deployHash: null });
 
-      // Build transaction
-      const transaction = buildWithdrawTransaction(
-        activeAccount.public_key.toLowerCase(),
-        sharesCspr
-      );
-      console.log('✅ Transaction built');
+      // Create transaction using ContractCallBuilder
+      const transaction = createWithdrawTransaction(activePublicKey, sharesCspr);
+      console.log('✅ Transaction created');
 
       setState({ status: 'signing', isLoading: true, error: null, deployHash: null });
 
-      // Define status callback
-      const onStatusUpdate = (status: string, data: any) => {
-        console.log('📊 Transaction status:', status, data);
+      // Send via CSPR.click
+      setState({ status: 'submitting', isLoading: true, error: null, deployHash: null });
+      const result = await sendTransaction(transaction);
 
-        if (status === CSPRClickTransactionStatus.CANCELLED) {
-          setState({
-            status: 'error',
-            isLoading: false,
-            error: 'Transaction cancelled by user',
-            deployHash: null,
-          });
-        } else if (status === CSPRClickTransactionStatus.ERROR) {
-          setState({
-            status: 'error',
-            isLoading: false,
-            error: data?.error || 'Transaction failed',
-            deployHash: null,
-          });
-        } else if (status === CSPRClickTransactionStatus.SENT) {
-          setState({ status: 'submitting', isLoading: true, error: null, deployHash: null });
-        } else if (status === CSPRClickTransactionStatus.PROCESSED) {
-          if (data.csprCloudTransaction?.error_message === null) {
-            setState({
-              status: 'success',
-              isLoading: false,
-              error: null,
-              deployHash: data.deployHash || data.transactionHash,
-            });
-          } else {
-            setState({
-              status: 'error',
-              isLoading: false,
-              error: data.csprCloudTransaction?.error_message || 'Transaction failed',
-              deployHash: null,
-            });
-          }
-        }
-      };
+      const deployHash = result?.deployHash;
+      console.log('✅ Transaction processed:', deployHash);
 
-      // Send transaction using CSPR.click
-      const result = await clickRef.send(
-        transaction,
-        activeAccount.public_key.toLowerCase(),
-        onStatusUpdate
-      );
+      setState({ status: 'success', isLoading: false, error: null, deployHash: deployHash || null });
 
-      if (result?.transactionHash) {
-        console.log('✅ Transaction submitted:', result.transactionHash);
-        return result.transactionHash;
-      } else if (result?.cancelled) {
-        return null;
-      } else {
-        throw new Error(result?.error || 'Transaction failed');
-      }
+      return deployHash;
     } catch (error: any) {
       console.error('❌ Withdraw failed:', error);
       setState({
