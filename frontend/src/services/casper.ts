@@ -164,6 +164,7 @@ export const signAndSubmitDeploy = async (
   try {
     // Serialize deploy for signing
     const deployJson = Deploy.toJSON(deploy);
+    console.log('📋 Deploy to sign:', deployJson);
 
     // Sign with wallet provider
     const signedDeployJson = await walletProvider.sign(
@@ -171,10 +172,21 @@ export const signAndSubmitDeploy = async (
       deploy.header.account!.toHex()
     );
 
-    // Parse signed deploy
-    const signedDeploy = Deploy.fromJSON(JSON.parse(signedDeployJson));
+    console.log('📋 Signed deploy JSON from wallet:', signedDeployJson);
+    console.log('📋 Type of signedDeployJson:', typeof signedDeployJson);
+
+    // Parse signed deploy - the wallet returns a JSON string
+    const signedDeployObject = JSON.parse(signedDeployJson);
+    console.log('📋 Parsed signed deploy object:', signedDeployObject);
+    console.log('📋 Account in signed deploy:', signedDeployObject.deploy?.header?.account);
+
+    // Recreate Deploy from signed JSON
+    const signedDeploy = Deploy.fromJSON(signedDeployObject);
+    console.log('📋 Recreated Deploy object:', signedDeploy);
+    console.log('📋 Deploy account hex:', signedDeploy.header.account?.toHex());
 
     // Submit to network
+    console.log('📋 Submitting deploy to RPC...');
     const result = await rpcClient.putDeploy(signedDeploy);
 
     const deployHashString = result.deployHash.toHex();
