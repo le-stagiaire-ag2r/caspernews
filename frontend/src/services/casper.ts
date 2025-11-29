@@ -201,10 +201,45 @@ export const signAndSubmitDeploy = async (
     console.log('📋 Deploy hash:', deploy.hash.toHex());
     console.log('📋 Submitting to RPC:', RPC_URL);
 
-    // Submit to network
+    // Submit to network using manual JSON-RPC call
     try {
-      const result = await rpcClient.putDeploy(deploy);
-      const deployHashString = result.deployHash.toHex();
+      // Serialize the signed deploy to JSON
+      const signedDeployJson = Deploy.toJSON(deploy);
+      console.log('📋 Signed deploy JSON prepared');
+
+      // Create JSON-RPC request
+      const rpcRequest = {
+        jsonrpc: '2.0',
+        method: 'account_put_deploy',
+        params: {
+          deploy: signedDeployJson
+        },
+        id: 1
+      };
+
+      console.log('📋 Sending JSON-RPC request to:', RPC_URL);
+
+      // Send request to our proxy endpoint
+      const response = await fetch(RPC_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(rpcRequest),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.error) {
+        console.error('❌ RPC error:', result.error);
+        throw new Error(`RPC Error (${result.error.code}): ${result.error.message}`);
+      }
+
+      const deployHashString = result.result.deploy_hash;
       console.log('✅ Deploy submitted:', deployHashString);
       return deployHashString;
     } catch (rpcError: any) {
