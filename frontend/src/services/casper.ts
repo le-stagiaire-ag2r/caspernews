@@ -204,10 +204,49 @@ export const signAndSubmitDeploy = async (
 
     // Manually construct the JSON-RPC request with proper serialization
     try {
-      // Build the deploy JSON manually in the format expected by Casper RPC
-      // Serialize payment and session
-      const paymentJson = deploy.payment.toJSON ? deploy.payment.toJSON() : deploy.payment;
-      const sessionJson = deploy.session.toJSON ? deploy.session.toJSON() : deploy.session;
+      // Helper function to serialize ExecutableDeployItem
+      const serializeExecutableItem = (item: ExecutableDeployItem): any => {
+        if (item.moduleBytes) {
+          return { ModuleBytes: { module_bytes: item.moduleBytes.toHex(), args: item.moduleBytes.args.toBytes() } };
+        } else if (item.storedContractByHash) {
+          return {
+            StoredContractByHash: {
+              hash: item.storedContractByHash.hash.toHex(),
+              entry_point: item.storedContractByHash.entryPoint,
+              args: item.storedContractByHash.args.toBytes()
+            }
+          };
+        } else if (item.storedContractByName) {
+          return {
+            StoredContractByName: {
+              name: item.storedContractByName.name,
+              entry_point: item.storedContractByName.entryPoint,
+              args: item.storedContractByName.args.toBytes()
+            }
+          };
+        } else if (item.storedVersionedContractByHash) {
+          return {
+            StoredVersionedContractByHash: {
+              hash: item.storedVersionedContractByHash.hash.toHex(),
+              version: item.storedVersionedContractByHash.version,
+              entry_point: item.storedVersionedContractByHash.entryPoint,
+              args: item.storedVersionedContractByHash.args.toBytes()
+            }
+          };
+        } else if (item.storedVersionedContractByName) {
+          return {
+            StoredVersionedContractByName: {
+              name: item.storedVersionedContractByName.name,
+              version: item.storedVersionedContractByName.version,
+              entry_point: item.storedVersionedContractByName.entryPoint,
+              args: item.storedVersionedContractByName.args.toBytes()
+            }
+          };
+        } else if (item.transfer) {
+          return { Transfer: { args: item.transfer.args.toBytes() } };
+        }
+        throw new Error('Unknown ExecutableDeployItem type');
+      };
 
       const deployJson = {
         hash: deploy.hash.toHex(),
@@ -216,12 +255,12 @@ export const signAndSubmitDeploy = async (
           timestamp: deploy.header.timestamp,
           ttl: deploy.header.ttl,
           gas_price: deploy.header.gasPrice,
-          body_hash: deploy.header.bodyHash.toHex(),
+          body_hash: deploy.header.bodyHash?.toHex() || '',
           dependencies: deploy.header.dependencies.map((d: any) => d.toHex()),
           chain_name: deploy.header.chainName
         },
-        payment: paymentJson,
-        session: sessionJson,
+        payment: serializeExecutableItem(deploy.payment),
+        session: serializeExecutableItem(deploy.session),
         approvals: deploy.approvals.map((approval: Approval) => ({
           signer: approval.signer.toHex(),
           signature: approval.signature.toHex()
