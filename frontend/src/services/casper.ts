@@ -167,6 +167,7 @@ export const signAndSubmitDeploy = async (
   try {
     // Serialize deploy for signing
     const deployJson = Deploy.toJSON(deploy);
+    console.log('📋 Deploy to sign:', deployJson);
 
     console.log('📤 Sending deploy to wallet for signing...');
 
