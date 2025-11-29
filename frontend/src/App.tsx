@@ -23,7 +23,7 @@ const queryClient = new QueryClient({
 const csprClickOptions = {
   appName: 'Casper DeFi Yield Optimizer',
   appId: CSPR_CLICK_APP_ID,
-  contentMode: 'popup' as const,
+  contentMode: 'iframe' as const,
   providers: ['casper-wallet', 'ledger', 'metamask-snap', 'torus-wallet'],
 };
 
