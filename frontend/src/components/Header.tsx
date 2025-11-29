@@ -1,21 +1,20 @@
-import { useWallet } from '../hooks/useWallet';
+import { useClickRef } from '@make-software/csprclick-ui';
 
 export const Header = () => {
-  const { activeAccount, isConnected, connectDirectWallet, disconnectDirectWallet } = useWallet();
+  const clickRef = useClickRef();
+  const activeAccount = clickRef?.getActiveAccount();
+  const isConnected = !!activeAccount;
 
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
-  const handleConnect = async () => {
-    const success = await connectDirectWallet();
-    if (!success) {
-      alert('Failed to connect wallet. Please install Casper Wallet extension.');
-    }
+  const handleConnect = () => {
+    clickRef?.signIn();
   };
 
   const handleDisconnect = () => {
-    disconnectDirectWallet();
+    clickRef?.signOut();
   };
 
   return (
