@@ -204,8 +204,11 @@ export const signAndSubmitDeploy = async (
     // Submit to network using manual JSON-RPC call
     try {
       // Serialize the signed deploy to JSON
-      const signedDeployJson = Deploy.toJSON(deploy);
+      const signedDeployJson = Deploy.toJSON(deploy) as any;
       console.log('📋 Signed deploy JSON prepared');
+      console.log('📋 Deploy JSON keys:', Object.keys(signedDeployJson));
+      console.log('📋 Deploy JSON header:', signedDeployJson.header);
+      console.log('📋 Deploy JSON approvals:', signedDeployJson.approvals);
 
       // Create JSON-RPC request
       const rpcRequest = {
@@ -218,6 +221,7 @@ export const signAndSubmitDeploy = async (
       };
 
       console.log('📋 Sending JSON-RPC request to:', RPC_URL);
+      console.log('📋 Request params keys:', Object.keys(rpcRequest.params.deploy));
 
       // Send request to our proxy endpoint
       const response = await fetch(RPC_URL, {
@@ -236,6 +240,7 @@ export const signAndSubmitDeploy = async (
 
       if (result.error) {
         console.error('❌ RPC error:', result.error);
+        console.error('❌ RPC error full details:', JSON.stringify(result.error, null, 2));
         throw new Error(`RPC Error (${result.error.code}): ${result.error.message}`);
       }
 

@@ -23,6 +23,10 @@ export default async function handler(
 
   try {
     console.log('📡 Proxying request to Casper RPC:', req.body.method);
+    console.log('📡 Request params keys:', req.body.params ? Object.keys(req.body.params) : 'no params');
+    if (req.body.params?.deploy) {
+      console.log('📡 Deploy params keys:', Object.keys(req.body.params.deploy));
+    }
 
     // Forward the request to the Casper RPC endpoint
     const response = await fetch(RPC_ENDPOINT, {
@@ -41,6 +45,10 @@ export default async function handler(
       errorCode: data.error?.code,
       errorMessage: data.error?.message,
     });
+
+    if (data.error) {
+      console.log('📥 Full error from Casper:', JSON.stringify(data.error, null, 2));
+    }
 
     // Return the response from the RPC endpoint
     return res.status(response.status).json(data);
