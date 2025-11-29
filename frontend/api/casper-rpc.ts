@@ -26,7 +26,12 @@ export default async function handler(
     console.log('📡 Request params keys:', req.body.params ? Object.keys(req.body.params) : 'no params');
     if (req.body.params?.deploy) {
       console.log('📡 Deploy params keys:', Object.keys(req.body.params.deploy));
+      console.log('📡 Deploy header.account:', req.body.params.deploy.header?.account);
+      console.log('📡 Deploy approvals[0]:', req.body.params.deploy.approvals?.[0]);
     }
+
+    // Log the full request body for debugging
+    console.log('📡 Full request body:', JSON.stringify(req.body, null, 2));
 
     // Forward the request to the Casper RPC endpoint
     const response = await fetch(RPC_ENDPOINT, {
