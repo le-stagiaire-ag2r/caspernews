@@ -202,51 +202,13 @@ export const signAndSubmitDeploy = async (
     console.log('📋 Deploy hash:', deploy.hash.toHex());
     console.log('📋 Submitting to RPC:', RPC_URL);
 
-    // Submit to network using manual JSON-RPC call
+    // Use SDK's putDeploy method - it handles serialization correctly
     try {
-      // Serialize the signed deploy to JSON
-      const signedDeployJson = Deploy.toJSON(deploy) as any;
-      console.log('📋 Signed deploy JSON prepared');
-      console.log('📋 Deploy JSON keys:', Object.keys(signedDeployJson));
-      console.log('📋 Deploy JSON header:', signedDeployJson.header);
-      console.log('📋 Deploy JSON approvals:', signedDeployJson.approvals);
+      console.log('📋 Calling rpcClient.putDeploy()...');
+      const result = await rpcClient.putDeploy(deploy);
 
-      // Create JSON-RPC request
-      const rpcRequest = {
-        jsonrpc: '2.0',
-        method: 'account_put_deploy',
-        params: {
-          deploy: signedDeployJson
-        },
-        id: 1
-      };
-
-      console.log('📋 Sending JSON-RPC request to:', RPC_URL);
-      console.log('📋 Request params keys:', Object.keys(rpcRequest.params.deploy));
-
-      // Send request to our proxy endpoint
-      const response = await fetch(RPC_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(rpcRequest),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-
-      if (result.error) {
-        console.error('❌ RPC error:', result.error);
-        console.error('❌ RPC error full details:', JSON.stringify(result.error, null, 2));
-        throw new Error(`RPC Error (${result.error.code}): ${result.error.message}`);
-      }
-
-      const deployHashString = result.result.deploy_hash;
-      console.log('✅ Deploy submitted:', deployHashString);
+      const deployHashString = result.deployHash.toHex();
+      console.log('✅ Deploy submitted successfully:', deployHashString);
       return deployHashString;
     } catch (rpcError: any) {
       console.error('❌ RPC putDeploy failed:', rpcError);
