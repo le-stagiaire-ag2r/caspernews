@@ -10,7 +10,16 @@ export const Header = () => {
   };
 
   const handleConnect = () => {
-    clickRef?.signIn();
+    console.log('🔘 Connect button clicked');
+    console.log('🔧 clickRef:', clickRef);
+
+    if (!clickRef) {
+      console.error('❌ clickRef is not initialized!');
+      return;
+    }
+
+    console.log('✅ Calling clickRef.signIn()...');
+    clickRef.signIn();
   };
 
   const handleDisconnect = () => {
