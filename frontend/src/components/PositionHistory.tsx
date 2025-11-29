@@ -1,4 +1,4 @@
-import { useClickRef } from '@make-software/csprclick-ui';
+import { useWallet } from '../hooks/useWallet';
 
 // DEMO TRANSACTION DATA - Replace with real data from backend in Phase 3
 const DEMO_TRANSACTIONS = [
@@ -45,8 +45,7 @@ const DEMO_TRANSACTIONS = [
 ];
 
 export const PositionHistory = () => {
-  const clickRef = useClickRef();
-  const isConnected = !!clickRef?.getActiveAccount();
+  const { isConnected } = useWallet();
 
   // Using demo data for now - will be replaced with real API calls in Phase 3
   const history = isConnected ? DEMO_TRANSACTIONS : [];

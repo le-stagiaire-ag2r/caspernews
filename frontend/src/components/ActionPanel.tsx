@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useClickRef } from '@make-software/csprclick-ui';
+import { useWallet } from '../hooks/useWallet';
 import { useTransaction } from '../hooks/useTransaction';
 import { useDeployStatus } from '../hooks/useDeployStatus';
 import { estimateGas, motesToCspr } from '../services/casper';
@@ -7,8 +7,7 @@ import { estimateGas, motesToCspr } from '../services/casper';
 type ActionType = 'deposit' | 'withdraw';
 
 export const ActionPanel = () => {
-  const clickRef = useClickRef();
-  const isConnected = !!clickRef?.getActiveAccount();
+  const { isConnected } = useWallet();
   const { deposit, withdraw, isLoading, error, deployHash, reset } = useTransaction();
   const { data: deployStatus } = useDeployStatus(deployHash);
 
