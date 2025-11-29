@@ -8,11 +8,13 @@ import {
   Args,
   CLValue,
   ContractHash,
+  Hash,
   RpcClient,
   HttpHandler,
   Approval,
   HexBytes,
   CasperNetwork,
+  ContractCallBuilder,
 } from 'casper-js-sdk';
 
 export const CASPER_NETWORK_NAME = import.meta.env.VITE_CASPER_NETWORK || 'casper-test';
@@ -50,112 +52,94 @@ export const estimateGas = (actionType: 'deposit' | 'withdraw'): string => {
 };
 
 /**
- * Create a deposit deploy to stake CSPR in the YieldOptimizer contract
+ * Build deposit transaction for CSPR.click
+ * Returns transaction in the format expected by clickRef.send()
  */
-export const createDepositDeploy = (
+export const buildDepositTransaction = (
   publicKeyHex: string,
   amountCspr: string
-): Deploy => {
-  const publicKey = PublicKey.fromHex(publicKeyHex);
+) => {
   const amountMotes = csprToMotes(amountCspr);
+  const paymentMotes = csprToMotes('5'); // 5 CSPR gas
 
-  // Payment amount for contract call (5 CSPR in motes)
-  const paymentAmount = csprToMotes('5');
-
-  // Create contract hash from string - remove 'hash-' prefix if present
-  console.log('📋 Original CONTRACT_HASH:', CONTRACT_HASH);
-  console.log('📋 CONTRACT_HASH length:', CONTRACT_HASH.length);
-  const hashHex = (CONTRACT_HASH.startsWith('hash-')
+  // Remove 'hash-' prefix if present
+  const hashHex = CONTRACT_HASH.startsWith('hash-')
     ? CONTRACT_HASH.substring(5)
-    : CONTRACT_HASH).trim(); // Remove whitespace/newlines
-  console.log('📋 Cleaned hashHex:', hashHex);
-  console.log('📋 hashHex length:', hashHex.length);
-  const contractHash = ContractHash.newContract(hashHex);
+    : CONTRACT_HASH;
 
-  // Runtime arguments for deposit - Odra expects 'amount' as attached value
+  console.log('📋 Building deposit transaction');
+  console.log('📋 Sender:', publicKeyHex);
+  console.log('📋 Amount:', amountCspr, 'CSPR (', amountMotes, 'motes)');
+  console.log('📋 Contract hash:', hashHex);
+
+  // Runtime arguments for deposit
   const args = Args.fromMap({
     amount: CLValue.newCLUInt512(amountMotes),
   });
 
-  // Create deploy header
-  const header = new DeployHeader(
-    CASPER_NETWORK_NAME, // chainName
-    [], // dependencies
-    1, // gasPrice
-    undefined, // timestamp (will be set automatically)
-    undefined, // ttl (default 30 minutes)
-    publicKey // account
-  );
+  // Build transaction using ContractCallBuilder
+  const transaction = new ContractCallBuilder()
+    .from(PublicKey.fromHex(publicKeyHex))
+    .contractHash(Hash.fromHex(hashHex))
+    .entryPoint('deposit')
+    .runtimeArgs(args)
+    .payment(Number.parseInt(paymentMotes, 10))
+    .chainName((window as any).csprclick?.chainName || CASPER_NETWORK_NAME)
+    .build();
 
-  // Create session (contract call)
-  const session = new ExecutableDeployItem();
-  session.storedContractByHash = new StoredContractByHash(
-    contractHash,
-    'deposit',
-    args
-  );
+  console.log('✅ Transaction built successfully');
 
-  // Create payment
-  const payment = ExecutableDeployItem.standardPayment(paymentAmount);
-
-  // Create deploy
-  const deploy = Deploy.makeDeploy(header, payment, session);
-
-  return deploy;
+  // Return in format expected by CSPR.click
+  return {
+    transaction: {
+      Version1: transaction.toJSON()
+    }
+  };
 };
 
 /**
- * Create a withdraw deploy to unstake shares from the YieldOptimizer contract
+ * Build withdraw transaction for CSPR.click
+ * Returns transaction in the format expected by clickRef.send()
  */
-export const createWithdrawDeploy = (
+export const buildWithdrawTransaction = (
   publicKeyHex: string,
   sharesAmount: string
-): Deploy => {
-  const publicKey = PublicKey.fromHex(publicKeyHex);
+) => {
+  const paymentMotes = csprToMotes('7'); // 7 CSPR gas
 
-  // Payment amount for contract call (7 CSPR in motes)
-  const paymentAmount = csprToMotes('7');
-
-  // Create contract hash from string - remove 'hash-' prefix if present
-  console.log('📋 Original CONTRACT_HASH:', CONTRACT_HASH);
-  console.log('📋 CONTRACT_HASH length:', CONTRACT_HASH.length);
-  const hashHex = (CONTRACT_HASH.startsWith('hash-')
+  // Remove 'hash-' prefix if present
+  const hashHex = CONTRACT_HASH.startsWith('hash-')
     ? CONTRACT_HASH.substring(5)
-    : CONTRACT_HASH).trim(); // Remove whitespace/newlines
-  console.log('📋 Cleaned hashHex:', hashHex);
-  console.log('📋 hashHex length:', hashHex.length);
-  const contractHash = ContractHash.newContract(hashHex);
+    : CONTRACT_HASH;
+
+  console.log('📋 Building withdraw transaction');
+  console.log('📋 Sender:', publicKeyHex);
+  console.log('📋 Shares:', sharesAmount);
+  console.log('📋 Contract hash:', hashHex);
 
   // Runtime arguments for withdraw
   const args = Args.fromMap({
     shares: CLValue.newCLUInt256(sharesAmount),
   });
 
-  // Create deploy header
-  const header = new DeployHeader(
-    CASPER_NETWORK_NAME, // chainName
-    [], // dependencies
-    1, // gasPrice
-    undefined, // timestamp (will be set automatically)
-    undefined, // ttl (default 30 minutes)
-    publicKey // account
-  );
+  // Build transaction using ContractCallBuilder
+  const transaction = new ContractCallBuilder()
+    .from(PublicKey.fromHex(publicKeyHex))
+    .contractHash(Hash.fromHex(hashHex))
+    .entryPoint('withdraw')
+    .runtimeArgs(args)
+    .payment(Number.parseInt(paymentMotes, 10))
+    .chainName((window as any).csprclick?.chainName || CASPER_NETWORK_NAME)
+    .build();
 
-  // Create session (contract call)
-  const session = new ExecutableDeployItem();
-  session.storedContractByHash = new StoredContractByHash(
-    contractHash,
-    'withdraw',
-    args
-  );
+  console.log('✅ Transaction built successfully');
 
-  // Create payment
-  const payment = ExecutableDeployItem.standardPayment(paymentAmount);
-
-  // Create deploy
-  const deploy = Deploy.makeDeploy(header, payment, session);
-
-  return deploy;
+  // Return in format expected by CSPR.click
+  return {
+    transaction: {
+      Version1: transaction.toJSON()
+    }
+  };
 };
 
 /**
