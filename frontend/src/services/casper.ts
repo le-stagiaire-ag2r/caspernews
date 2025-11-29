@@ -16,8 +16,8 @@ import {
 
 export const CASPER_NETWORK_NAME = import.meta.env.VITE_CASPER_NETWORK || 'casper-test';
 export const CONTRACT_HASH = import.meta.env.VITE_CONTRACT_HASH || 'hash-f49d339a1e82cb95cc1ce2eea5c0c7589e8694d3678d0ab9432e57ea00e1d1df';
-// Use Vercel serverless proxy to avoid CORS issues
-export const RPC_URL = import.meta.env.VITE_CASPER_RPC_URL || '/api/casper-rpc';
+// Use direct RPC endpoint - CORS is handled by the node
+export const RPC_URL = import.meta.env.VITE_CASPER_RPC_URL || 'https://node.testnet.casper.network/rpc';
 
 // Initialize RPC client with HTTP handler
 const httpHandler = new HttpHandler(RPC_URL);
