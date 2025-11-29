@@ -10,11 +10,14 @@ import {
   ContractHash,
   RpcClient,
   HttpHandler,
+  Approval,
+  HexBytes,
 } from 'casper-js-sdk';
 
 export const CASPER_NETWORK_NAME = import.meta.env.VITE_CASPER_NETWORK || 'casper-test';
 export const CONTRACT_HASH = import.meta.env.VITE_CONTRACT_HASH || 'hash-f49d339a1e82cb95cc1ce2eea5c0c7589e8694d3678d0ab9432e57ea00e1d1df';
-export const RPC_URL = import.meta.env.VITE_CASPER_RPC_URL || 'https://rpc.testnet.casperlabs.io/rpc';
+// Use Vercel serverless proxy to avoid CORS issues
+export const RPC_URL = import.meta.env.VITE_CASPER_RPC_URL || '/api/casper-rpc';
 
 // Initialize RPC client with HTTP handler
 const httpHandler = new HttpHandler(RPC_URL);
@@ -58,8 +61,15 @@ export const createDepositDeploy = (
   // Payment amount for contract call (5 CSPR in motes)
   const paymentAmount = csprToMotes('5');
 
-  // Create contract hash from string (includes 'hash-' prefix)
-  const contractHash = ContractHash.newContract(CONTRACT_HASH);
+  // Create contract hash from string - remove 'hash-' prefix if present
+  console.log('📋 Original CONTRACT_HASH:', CONTRACT_HASH);
+  console.log('📋 CONTRACT_HASH length:', CONTRACT_HASH.length);
+  const hashHex = (CONTRACT_HASH.startsWith('hash-')
+    ? CONTRACT_HASH.substring(5)
+    : CONTRACT_HASH).trim(); // Remove whitespace/newlines
+  console.log('📋 Cleaned hashHex:', hashHex);
+  console.log('📋 hashHex length:', hashHex.length);
+  const contractHash = ContractHash.newContract(hashHex);
 
   // Runtime arguments for deposit - Odra expects 'amount' as attached value
   const args = Args.fromMap({
@@ -105,8 +115,15 @@ export const createWithdrawDeploy = (
   // Payment amount for contract call (7 CSPR in motes)
   const paymentAmount = csprToMotes('7');
 
-  // Create contract hash from string (includes 'hash-' prefix)
-  const contractHash = ContractHash.newContract(CONTRACT_HASH);
+  // Create contract hash from string - remove 'hash-' prefix if present
+  console.log('📋 Original CONTRACT_HASH:', CONTRACT_HASH);
+  console.log('📋 CONTRACT_HASH length:', CONTRACT_HASH.length);
+  const hashHex = (CONTRACT_HASH.startsWith('hash-')
+    ? CONTRACT_HASH.substring(5)
+    : CONTRACT_HASH).trim(); // Remove whitespace/newlines
+  console.log('📋 Cleaned hashHex:', hashHex);
+  console.log('📋 hashHex length:', hashHex.length);
+  const contractHash = ContractHash.newContract(hashHex);
 
   // Runtime arguments for withdraw
   const args = Args.fromMap({
@@ -150,22 +167,96 @@ export const signAndSubmitDeploy = async (
   try {
     // Serialize deploy for signing
     const deployJson = Deploy.toJSON(deploy);
+    console.log('📋 Deploy to sign:', deployJson);
 
-    // Sign with wallet provider
-    const signedDeployJson = await walletProvider.sign(
+    console.log('📤 Sending deploy to wallet for signing...');
+
+    // Sign with wallet provider - it returns just the signature, not the full deploy
+    const signatureResponse = await walletProvider.sign(
       JSON.stringify(deployJson),
       deploy.header.account!.toHex()
     );
 
-    // Parse signed deploy
-    const signedDeploy = Deploy.fromJSON(JSON.parse(signedDeployJson));
+    console.log('✅ Signature received from wallet');
+    console.log('📋 Signature hex:', signatureResponse.signatureHex);
 
-    // Submit to network
-    const result = await rpcClient.putDeploy(signedDeploy);
+    if (signatureResponse.cancelled) {
+      throw new Error('User cancelled the signing request');
+    }
 
-    const deployHashString = result.deployHash.toHex();
-    console.log('✅ Deploy submitted:', deployHashString);
-    return deployHashString;
+    // Add the signature to the original deploy
+    // The signature bytes are in the 'signature' field
+    const signatureBytes = new Uint8Array(Object.values(signatureResponse.signature));
+
+    // Create a HexBytes object from the signature
+    const signature = new HexBytes(signatureBytes);
+
+    // Create an Approval with the signer's public key and signature
+    const approval = new Approval(deploy.header.account!, signature);
+
+    // Add the approval to the deploy's approvals list
+    deploy.approvals.push(approval);
+
+    console.log('✅ Signature added to deploy');
+    console.log('📋 Deploy approvals count:', deploy.approvals.length);
+    console.log('📋 Deploy hash:', deploy.hash.toHex());
+    console.log('📋 Submitting to RPC:', RPC_URL);
+
+    // Submit to network using manual JSON-RPC call
+    try {
+      // Serialize the signed deploy to JSON
+      const signedDeployJson = Deploy.toJSON(deploy) as any;
+      console.log('📋 Signed deploy JSON prepared');
+      console.log('📋 Deploy JSON keys:', Object.keys(signedDeployJson));
+      console.log('📋 Deploy JSON header:', signedDeployJson.header);
+      console.log('📋 Deploy JSON approvals:', signedDeployJson.approvals);
+
+      // Create JSON-RPC request
+      const rpcRequest = {
+        jsonrpc: '2.0',
+        method: 'account_put_deploy',
+        params: {
+          deploy: signedDeployJson
+        },
+        id: 1
+      };
+
+      console.log('📋 Sending JSON-RPC request to:', RPC_URL);
+      console.log('📋 Request params keys:', Object.keys(rpcRequest.params.deploy));
+
+      // Send request to our proxy endpoint
+      const response = await fetch(RPC_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(rpcRequest),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.error) {
+        console.error('❌ RPC error:', result.error);
+        console.error('❌ RPC error full details:', JSON.stringify(result.error, null, 2));
+        throw new Error(`RPC Error (${result.error.code}): ${result.error.message}`);
+      }
+
+      const deployHashString = result.result.deploy_hash;
+      console.log('✅ Deploy submitted:', deployHashString);
+      return deployHashString;
+    } catch (rpcError: any) {
+      console.error('❌ RPC putDeploy failed:', rpcError);
+      console.error('❌ RPC error details:', {
+        message: rpcError.message,
+        stack: rpcError.stack,
+        name: rpcError.name,
+      });
+      throw rpcError;
+    }
   } catch (error) {
     console.error('❌ Deploy submission failed:', error);
     throw error;

@@ -1,30 +1,15 @@
 {
-  "version": 2,
-  "name": "casper-defi-yield-optimizer",
-  "builds": [
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
+  "rewrites": [
     {
-      "src": "frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "frontend/dist"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "handle": "filesystem"
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
     },
     {
-      "src": "/(.*)",
-      "dest": "/frontend/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
-  ],
-  "env": {
-    "VITE_CASPER_NETWORK": "casper-test",
-    "VITE_CONTRACT_HASH": "hash-f49d339a1e82cb95cc1ce2eea5c0c7589e8694d3678d0ab9432e57ea00e1d1df",
-    "VITE_CASPER_RPC_URL": "https://rpc.testnet.casperlabs.io/rpc",
-    "VITE_API_URL": "https://your-backend-url.vercel.app/api",
-    "VITE_APP_NAME": "Casper DeFi Yield Optimizer",
-    "VITE_APP_VERSION": "1.0.0"
-  }
+  ]
 }
