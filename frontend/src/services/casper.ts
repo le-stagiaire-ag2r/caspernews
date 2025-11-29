@@ -200,20 +200,111 @@ export const signAndSubmitDeploy = async (
     console.log('✅ Signature added to deploy');
     console.log('📋 Deploy approvals count:', deploy.approvals.length);
     console.log('📋 Deploy hash:', deploy.hash.toHex());
-    console.log('📋 Submitting to RPC using rpcClient.putDeploy()...');
+    console.log('📋 Submitting deploy manually...');
 
-    // Submit to network using RpcClient (it handles serialization automatically)
+    // Manually construct the JSON-RPC request with proper serialization
     try {
-      const result = await rpcClient.putDeploy(deploy);
-      const deployHashString = result.deployHash.toHex();
+      // Helper function to serialize ExecutableDeployItem
+      const serializeExecutableItem = (item: ExecutableDeployItem): any => {
+        if (item.moduleBytes) {
+          return { ModuleBytes: { module_bytes: Array.from(item.moduleBytes.moduleBytes), args: Array.from(item.moduleBytes.args.toBytes()) } };
+        } else if (item.storedContractByHash) {
+          return {
+            StoredContractByHash: {
+              hash: item.storedContractByHash.hash.hash,
+              entry_point: item.storedContractByHash.entryPoint,
+              args: Array.from(item.storedContractByHash.args.toBytes())
+            }
+          };
+        } else if (item.storedContractByName) {
+          return {
+            StoredContractByName: {
+              name: item.storedContractByName.name,
+              entry_point: item.storedContractByName.entryPoint,
+              args: Array.from(item.storedContractByName.args.toBytes())
+            }
+          };
+        } else if (item.storedVersionedContractByHash) {
+          return {
+            StoredVersionedContractByHash: {
+              hash: item.storedVersionedContractByHash.hash.hash,
+              version: item.storedVersionedContractByHash.version,
+              entry_point: item.storedVersionedContractByHash.entryPoint,
+              args: Array.from(item.storedVersionedContractByHash.args.toBytes())
+            }
+          };
+        } else if (item.storedVersionedContractByName) {
+          return {
+            StoredVersionedContractByName: {
+              name: item.storedVersionedContractByName.name,
+              version: item.storedVersionedContractByName.version,
+              entry_point: item.storedVersionedContractByName.entryPoint,
+              args: Array.from(item.storedVersionedContractByName.args.toBytes())
+            }
+          };
+        } else if (item.transfer) {
+          return { Transfer: { args: Array.from(item.transfer.args.toBytes()) } };
+        }
+        throw new Error('Unknown ExecutableDeployItem type');
+      };
+
+      const deployJson = {
+        hash: deploy.hash.toHex(),
+        header: {
+          account: deploy.header.account!.toHex(),
+          timestamp: deploy.header.timestamp,
+          ttl: deploy.header.ttl,
+          gas_price: deploy.header.gasPrice,
+          body_hash: deploy.header.bodyHash?.toHex() || '',
+          dependencies: deploy.header.dependencies.map((d: any) => d.toHex()),
+          chain_name: deploy.header.chainName
+        },
+        payment: serializeExecutableItem(deploy.payment),
+        session: serializeExecutableItem(deploy.session),
+        approvals: deploy.approvals.map((approval: Approval) => ({
+          signer: approval.signer.toHex(),
+          signature: approval.signature.toHex()
+        }))
+      };
+
+      console.log('📋 Manual deploy JSON:', JSON.stringify(deployJson, null, 2));
+
+      console.log('📋 Manual deploy JSON constructed');
+
+      // Create JSON-RPC request
+      const rpcRequest = {
+        jsonrpc: '2.0',
+        method: 'account_put_deploy',
+        params: { deploy: deployJson },
+        id: 1
+      };
+
+      // Send request to our proxy endpoint
+      const response = await fetch(RPC_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(rpcRequest),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.error) {
+        console.error('❌ RPC error:', result.error);
+        throw new Error(`RPC Error (${result.error.code}): ${result.error.message}`);
+      }
+
+      const deployHashString = result.result.deploy_hash;
       console.log('✅ Deploy submitted:', deployHashString);
       return deployHashString;
     } catch (rpcError: any) {
-      console.error('❌ RPC putDeploy failed:', rpcError);
-      console.error('❌ RPC error details:', {
+      console.error('❌ Deploy submission failed:', rpcError);
+      console.error('❌ Error details:', {
         message: rpcError.message,
         stack: rpcError.stack,
-        name: rpcError.name,
       });
       throw rpcError;
     }
