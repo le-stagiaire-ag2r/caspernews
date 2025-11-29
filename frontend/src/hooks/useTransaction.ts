@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { useWallet } from './useWallet';
+import { useClickWallet } from './useClickWallet';
 import {
-  createDepositDeploy,
-  createWithdrawDeploy,
-  signAndSubmitDeploy,
+  createDepositTransaction,
+  createWithdrawTransaction,
 } from '../services/casper';
 
 export type TransactionStatus = 'idle' | 'preparing' | 'signing' | 'submitting' | 'success' | 'error';
@@ -16,7 +15,7 @@ export interface TransactionState {
 }
 
 export const useTransaction = () => {
-  const { activeAccount, provider } = useWallet();
+  const { activePublicKey, sendTransaction } = useClickWallet();
   const [state, setState] = useState<TransactionState>({
     status: 'idle',
     isLoading: false,
@@ -28,34 +27,32 @@ export const useTransaction = () => {
    * Execute a deposit transaction
    */
   const deposit = async (amountCspr: string) => {
-    if (!activeAccount) {
+    if (!activePublicKey) {
       setState(prev => ({ ...prev, error: 'No wallet connected' }));
-      return null;
-    }
-
-    if (!provider) {
-      setState(prev => ({ ...prev, error: 'Wallet provider not available' }));
       return null;
     }
 
     try {
       console.log('🚀 Starting deposit transaction...');
-      console.log('Public Key:', activeAccount.public_key);
+      console.log('Public Key:', activePublicKey);
       console.log('Amount:', amountCspr, 'CSPR');
 
       setState({ status: 'preparing', isLoading: true, error: null, deployHash: null });
 
-      // Create deploy
-      const deploy = createDepositDeploy(activeAccount.public_key, amountCspr);
-      console.log('✅ Deploy created');
+      // Create transaction using ContractCallBuilder
+      const transaction = createDepositTransaction(activePublicKey, amountCspr);
+      console.log('✅ Transaction created');
 
       setState({ status: 'signing', isLoading: true, error: null, deployHash: null });
 
-      // Sign and submit
-      const deployHash = await signAndSubmitDeploy(deploy, provider);
-      console.log('✅ Deploy submitted:', deployHash);
+      // Send via CSPR.click
+      setState({ status: 'submitting', isLoading: true, error: null, deployHash: null });
+      const result = await sendTransaction(transaction);
 
-      setState({ status: 'success', isLoading: false, error: null, deployHash });
+      const deployHash = result?.deployHash;
+      console.log('✅ Transaction processed:', deployHash);
+
+      setState({ status: 'success', isLoading: false, error: null, deployHash: deployHash || null });
 
       return deployHash;
     } catch (error: any) {
@@ -74,34 +71,32 @@ export const useTransaction = () => {
    * Execute a withdrawal transaction
    */
   const withdraw = async (sharesCspr: string) => {
-    if (!activeAccount) {
+    if (!activePublicKey) {
       setState(prev => ({ ...prev, error: 'No wallet connected' }));
-      return null;
-    }
-
-    if (!provider) {
-      setState(prev => ({ ...prev, error: 'Wallet provider not available' }));
       return null;
     }
 
     try {
       console.log('🚀 Starting withdraw transaction...');
-      console.log('Public Key:', activeAccount.public_key);
+      console.log('Public Key:', activePublicKey);
       console.log('Shares:', sharesCspr);
 
       setState({ status: 'preparing', isLoading: true, error: null, deployHash: null });
 
-      // Create deploy
-      const deploy = createWithdrawDeploy(activeAccount.public_key, sharesCspr);
-      console.log('✅ Deploy created');
+      // Create transaction using ContractCallBuilder
+      const transaction = createWithdrawTransaction(activePublicKey, sharesCspr);
+      console.log('✅ Transaction created');
 
       setState({ status: 'signing', isLoading: true, error: null, deployHash: null });
 
-      // Sign and submit
-      const deployHash = await signAndSubmitDeploy(deploy, provider);
-      console.log('✅ Deploy submitted:', deployHash);
+      // Send via CSPR.click
+      setState({ status: 'submitting', isLoading: true, error: null, deployHash: null });
+      const result = await sendTransaction(transaction);
 
-      setState({ status: 'success', isLoading: false, error: null, deployHash });
+      const deployHash = result?.deployHash;
+      console.log('✅ Transaction processed:', deployHash);
+
+      setState({ status: 'success', isLoading: false, error: null, deployHash: deployHash || null });
 
       return deployHash;
     } catch (error: any) {

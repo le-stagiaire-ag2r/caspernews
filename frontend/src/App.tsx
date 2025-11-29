@@ -1,9 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ClickProvider } from '@make-software/csprclick-ui';
 import { WalletProvider } from './hooks/useWallet';
 import { Header } from './components/Header';
 import { Dashboard } from './components/Dashboard';
 import { ActionPanel } from './components/ActionPanel';
 import { PositionHistory } from './components/PositionHistory';
+
+const CSPR_CLICK_APP_ID = import.meta.env.VITE_CSPR_CLICK_APP_ID || '4f5baf79-a4d3-4efc-b778-eea95fae';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -17,9 +20,10 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <WalletProvider>
-        <div className="min-h-screen bg-casper-dark">
-        <Header />
+      <ClickProvider appId={CSPR_CLICK_APP_ID}>
+        <WalletProvider>
+          <div className="min-h-screen bg-casper-dark">
+          <Header />
 
           <main className="container mx-auto px-4 py-8">
             <Dashboard />
@@ -43,8 +47,9 @@ function App() {
               </p>
             </div>
           </footer>
-        </div>
-      </WalletProvider>
+          </div>
+        </WalletProvider>
+      </ClickProvider>
     </QueryClientProvider>
   );
 }

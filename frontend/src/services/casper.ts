@@ -1,4 +1,4 @@
-// Casper service for blockchain interactions using casper-js-sdk v5
+// Casper service using casper-js-sdk v5
 import {
   PublicKey,
   Deploy,
@@ -10,16 +10,13 @@ import {
   ContractHash,
   RpcClient,
   HttpHandler,
-  Approval,
-  HexBytes,
 } from 'casper-js-sdk';
 
 export const CASPER_NETWORK_NAME = import.meta.env.VITE_CASPER_NETWORK || 'casper-test';
 export const CONTRACT_HASH = import.meta.env.VITE_CONTRACT_HASH || 'hash-f49d339a1e82cb95cc1ce2eea5c0c7589e8694d3678d0ab9432e57ea00e1d1df';
-// Use Vercel serverless proxy to avoid CORS issues
-export const RPC_URL = import.meta.env.VITE_CASPER_RPC_URL || '/api/casper-rpc';
+export const RPC_URL = 'https://rpc.testnet.casperlabs.io/rpc'; // For status queries only
 
-// Initialize RPC client with HTTP handler
+// Initialize RPC client for queries (not for submitting - CSPR.click handles that)
 const httpHandler = new HttpHandler(RPC_URL);
 export const rpcClient = new RpcClient(httpHandler);
 
@@ -49,29 +46,32 @@ export const estimateGas = (actionType: 'deposit' | 'withdraw'): string => {
 };
 
 /**
- * Create a deposit deploy to stake CSPR in the YieldOptimizer contract
+ * Create a deposit transaction
+ * This returns a deploy object ready to be signed by CSPR.click
  */
-export const createDepositDeploy = (
+export const createDepositTransaction = (
   publicKeyHex: string,
   amountCspr: string
-): Deploy => {
+) => {
   const publicKey = PublicKey.fromHex(publicKeyHex);
   const amountMotes = csprToMotes(amountCspr);
 
   // Payment amount for contract call (5 CSPR in motes)
   const paymentAmount = csprToMotes('5');
 
-  // Create contract hash from string - remove 'hash-' prefix if present
-  console.log('📋 Original CONTRACT_HASH:', CONTRACT_HASH);
-  console.log('📋 CONTRACT_HASH length:', CONTRACT_HASH.length);
-  const hashHex = (CONTRACT_HASH.startsWith('hash-')
+  // Get contract hash without 'hash-' prefix
+  const contractHashHex = CONTRACT_HASH.startsWith('hash-')
     ? CONTRACT_HASH.substring(5)
-    : CONTRACT_HASH).trim(); // Remove whitespace/newlines
-  console.log('📋 Cleaned hashHex:', hashHex);
-  console.log('📋 hashHex length:', hashHex.length);
-  const contractHash = ContractHash.newContract(hashHex);
+    : CONTRACT_HASH;
 
-  // Runtime arguments for deposit - Odra expects 'amount' as attached value
+  console.log('📋 Creating deposit transaction:');
+  console.log('  Contract Hash:', contractHashHex);
+  console.log('  Amount:', amountCspr, 'CSPR');
+  console.log('  Public Key:', publicKeyHex);
+
+  const contractHash = ContractHash.newContract(contractHashHex);
+
+  // Runtime arguments for deposit
   const args = Args.fromMap({
     amount: CLValue.newCLUInt512(amountMotes),
   });
@@ -100,30 +100,35 @@ export const createDepositDeploy = (
   // Create deploy
   const deploy = Deploy.makeDeploy(header, payment, session);
 
-  return deploy;
+  console.log('✅ Deploy created');
+
+  // Return deploy JSON for CSPR.click
+  return Deploy.toJSON(deploy);
 };
 
 /**
- * Create a withdraw deploy to unstake shares from the YieldOptimizer contract
+ * Create a withdraw transaction
  */
-export const createWithdrawDeploy = (
+export const createWithdrawTransaction = (
   publicKeyHex: string,
   sharesAmount: string
-): Deploy => {
+) => {
   const publicKey = PublicKey.fromHex(publicKeyHex);
 
   // Payment amount for contract call (7 CSPR in motes)
   const paymentAmount = csprToMotes('7');
 
-  // Create contract hash from string - remove 'hash-' prefix if present
-  console.log('📋 Original CONTRACT_HASH:', CONTRACT_HASH);
-  console.log('📋 CONTRACT_HASH length:', CONTRACT_HASH.length);
-  const hashHex = (CONTRACT_HASH.startsWith('hash-')
+  // Get contract hash without 'hash-' prefix
+  const contractHashHex = CONTRACT_HASH.startsWith('hash-')
     ? CONTRACT_HASH.substring(5)
-    : CONTRACT_HASH).trim(); // Remove whitespace/newlines
-  console.log('📋 Cleaned hashHex:', hashHex);
-  console.log('📋 hashHex length:', hashHex.length);
-  const contractHash = ContractHash.newContract(hashHex);
+    : CONTRACT_HASH;
+
+  console.log('📋 Creating withdraw transaction:');
+  console.log('  Contract Hash:', contractHashHex);
+  console.log('  Shares:', sharesAmount);
+  console.log('  Public Key:', publicKeyHex);
+
+  const contractHash = ContractHash.newContract(contractHashHex);
 
   // Runtime arguments for withdraw
   const args = Args.fromMap({
@@ -154,168 +159,15 @@ export const createWithdrawDeploy = (
   // Create deploy
   const deploy = Deploy.makeDeploy(header, payment, session);
 
-  return deploy;
-};
+  console.log('✅ Deploy created');
 
-/**
- * Sign and submit a deploy using the connected wallet provider
- */
-export const signAndSubmitDeploy = async (
-  deploy: Deploy,
-  walletProvider: any
-): Promise<string> => {
-  try {
-    // Serialize deploy for signing
-    const deployJson = Deploy.toJSON(deploy);
-    console.log('📋 Deploy to sign:', deployJson);
-
-    console.log('📤 Sending deploy to wallet for signing...');
-
-    // Sign with wallet provider - it returns just the signature, not the full deploy
-    const signatureResponse = await walletProvider.sign(
-      JSON.stringify(deployJson),
-      deploy.header.account!.toHex()
-    );
-
-    console.log('✅ Signature received from wallet');
-    console.log('📋 Signature hex:', signatureResponse.signatureHex);
-
-    if (signatureResponse.cancelled) {
-      throw new Error('User cancelled the signing request');
-    }
-
-    // Add the signature to the original deploy
-    // The signature bytes are in the 'signature' field
-    const signatureBytes = new Uint8Array(Object.values(signatureResponse.signature));
-
-    // Create a HexBytes object from the signature
-    const signature = new HexBytes(signatureBytes);
-
-    // Create an Approval with the signer's public key and signature
-    const approval = new Approval(deploy.header.account!, signature);
-
-    // Add the approval to the deploy's approvals list
-    deploy.approvals.push(approval);
-
-    console.log('✅ Signature added to deploy');
-    console.log('📋 Deploy approvals count:', deploy.approvals.length);
-    console.log('📋 Deploy hash:', deploy.hash.toHex());
-    console.log('📋 Submitting deploy manually...');
-
-    // Manually construct the JSON-RPC request with proper serialization
-    try {
-      // Helper function to serialize ExecutableDeployItem
-      const serializeExecutableItem = (item: ExecutableDeployItem): any => {
-        if (item.moduleBytes) {
-          return { ModuleBytes: { module_bytes: Array.from(item.moduleBytes.moduleBytes), args: Array.from(item.moduleBytes.args.toBytes()) } };
-        } else if (item.storedContractByHash) {
-          return {
-            StoredContractByHash: {
-              hash: item.storedContractByHash.hash.hash,
-              entry_point: item.storedContractByHash.entryPoint,
-              args: Array.from(item.storedContractByHash.args.toBytes())
-            }
-          };
-        } else if (item.storedContractByName) {
-          return {
-            StoredContractByName: {
-              name: item.storedContractByName.name,
-              entry_point: item.storedContractByName.entryPoint,
-              args: Array.from(item.storedContractByName.args.toBytes())
-            }
-          };
-        } else if (item.storedVersionedContractByHash) {
-          return {
-            StoredVersionedContractByHash: {
-              hash: item.storedVersionedContractByHash.hash.hash,
-              version: item.storedVersionedContractByHash.version,
-              entry_point: item.storedVersionedContractByHash.entryPoint,
-              args: Array.from(item.storedVersionedContractByHash.args.toBytes())
-            }
-          };
-        } else if (item.storedVersionedContractByName) {
-          return {
-            StoredVersionedContractByName: {
-              name: item.storedVersionedContractByName.name,
-              version: item.storedVersionedContractByName.version,
-              entry_point: item.storedVersionedContractByName.entryPoint,
-              args: Array.from(item.storedVersionedContractByName.args.toBytes())
-            }
-          };
-        } else if (item.transfer) {
-          return { Transfer: { args: Array.from(item.transfer.args.toBytes()) } };
-        }
-        throw new Error('Unknown ExecutableDeployItem type');
-      };
-
-      const deployJson = {
-        hash: deploy.hash.toHex(),
-        header: {
-          account: deploy.header.account!.toHex(),
-          timestamp: deploy.header.timestamp,
-          ttl: deploy.header.ttl,
-          gas_price: deploy.header.gasPrice,
-          body_hash: deploy.header.bodyHash?.toHex() || '',
-          dependencies: deploy.header.dependencies.map((d: any) => d.toHex()),
-          chain_name: deploy.header.chainName
-        },
-        payment: serializeExecutableItem(deploy.payment),
-        session: serializeExecutableItem(deploy.session),
-        approvals: deploy.approvals.map((approval: Approval) => ({
-          signer: approval.signer.toHex(),
-          signature: approval.signature.toHex()
-        }))
-      };
-
-      console.log('📋 Manual deploy JSON:', JSON.stringify(deployJson, null, 2));
-
-      console.log('📋 Manual deploy JSON constructed');
-
-      // Create JSON-RPC request
-      const rpcRequest = {
-        jsonrpc: '2.0',
-        method: 'account_put_deploy',
-        params: { deploy: deployJson },
-        id: 1
-      };
-
-      // Send request to our proxy endpoint
-      const response = await fetch(RPC_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(rpcRequest),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-
-      if (result.error) {
-        console.error('❌ RPC error:', result.error);
-        throw new Error(`RPC Error (${result.error.code}): ${result.error.message}`);
-      }
-
-      const deployHashString = result.result.deploy_hash;
-      console.log('✅ Deploy submitted:', deployHashString);
-      return deployHashString;
-    } catch (rpcError: any) {
-      console.error('❌ Deploy submission failed:', rpcError);
-      console.error('❌ Error details:', {
-        message: rpcError.message,
-        stack: rpcError.stack,
-      });
-      throw rpcError;
-    }
-  } catch (error) {
-    console.error('❌ Deploy submission failed:', error);
-    throw error;
-  }
+  // Return deploy JSON for CSPR.click
+  return Deploy.toJSON(deploy);
 };
 
 /**
  * Get deploy status by hash
+ * Uses RPC directly (no CORS issue for queries)
  */
 export const getDeployStatus = async (deployHash: string): Promise<any> => {
   try {
