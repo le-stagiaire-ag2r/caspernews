@@ -12,6 +12,7 @@ import {
   HttpHandler,
   Approval,
   HexBytes,
+  CasperNetwork,
 } from 'casper-js-sdk';
 
 export const CASPER_NETWORK_NAME = import.meta.env.VITE_CASPER_NETWORK || 'casper-test';
@@ -193,58 +194,18 @@ export const signAndSubmitDeploy = async (
     // Create an Approval with the signer's public key and signature
     const approval = new Approval(deploy.header.account!, signature);
 
-    // Add the approval to the deploy's approvals list
-    deploy.approvals.push(approval);
+    // Add the approval using the proper method
+    deploy.addApproval(approval);
 
     console.log('✅ Signature added to deploy');
     console.log('📋 Deploy approvals count:', deploy.approvals.length);
     console.log('📋 Deploy hash:', deploy.hash.toHex());
-    console.log('📋 Submitting to RPC:', RPC_URL);
+    console.log('📋 Submitting to RPC using rpcClient.putDeploy()');
 
-    // Submit to network using manual JSON-RPC call
+    // Submit to network using rpcClient.putDeploy() as recommended in migration guide
     try {
-      // Serialize the signed deploy to JSON
-      const signedDeployJson = Deploy.toJSON(deploy) as any;
-      console.log('📋 Signed deploy JSON prepared');
-      console.log('📋 Deploy JSON keys:', Object.keys(signedDeployJson));
-      console.log('📋 Deploy JSON header:', signedDeployJson.header);
-      console.log('📋 Deploy JSON approvals:', signedDeployJson.approvals);
-
-      // Create JSON-RPC request
-      const rpcRequest = {
-        jsonrpc: '2.0',
-        method: 'account_put_deploy',
-        params: {
-          deploy: signedDeployJson
-        },
-        id: 1
-      };
-
-      console.log('📋 Sending JSON-RPC request to:', RPC_URL);
-      console.log('📋 Request params keys:', Object.keys(rpcRequest.params.deploy));
-
-      // Send request to our proxy endpoint
-      const response = await fetch(RPC_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(rpcRequest),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-
-      if (result.error) {
-        console.error('❌ RPC error:', result.error);
-        console.error('❌ RPC error full details:', JSON.stringify(result.error, null, 2));
-        throw new Error(`RPC Error (${result.error.code}): ${result.error.message}`);
-      }
-
-      const deployHashString = result.result.deploy_hash;
+      const result = await rpcClient.putDeploy(deploy);
+      const deployHashString = result.deployHash.toHex();
       console.log('✅ Deploy submitted:', deployHashString);
       return deployHashString;
     } catch (rpcError: any) {
