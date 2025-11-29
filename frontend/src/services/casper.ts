@@ -1,8 +1,13 @@
 // Casper service using casper-js-sdk v5
 import {
   PublicKey,
+  Deploy,
+  DeployHeader,
+  ExecutableDeployItem,
+  StoredContractByHash,
   Args,
   CLValue,
+  ContractHash,
   RpcClient,
   HttpHandler,
 } from 'casper-js-sdk';
@@ -50,7 +55,6 @@ export const createDepositTransaction = (
 ) => {
   const publicKey = PublicKey.fromHex(publicKeyHex);
   const amountMotes = csprToMotes(amountCspr);
-  const paymentMotes = csprToMotes('5'); // 5 CSPR gas
 
   // Payment amount for contract call (5 CSPR in motes)
   const paymentAmount = csprToMotes('5');
