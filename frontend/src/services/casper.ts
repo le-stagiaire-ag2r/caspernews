@@ -1,19 +1,10 @@
 // Casper service for blockchain interactions using casper-js-sdk v5
 import {
   PublicKey,
-  Deploy,
-  DeployHeader,
-  ExecutableDeployItem,
-  StoredContractByHash,
   Args,
   CLValue,
-  ContractHash,
-  Hash,
   RpcClient,
   HttpHandler,
-  Approval,
-  HexBytes,
-  CasperNetwork,
   ContractCallBuilder,
 } from 'casper-js-sdk';
 
@@ -80,7 +71,7 @@ export const buildDepositTransaction = (
   // Build transaction using ContractCallBuilder
   const transaction = new ContractCallBuilder()
     .from(PublicKey.fromHex(publicKeyHex))
-    .contractHash(Hash.fromHex(hashHex))
+    .contractHash(hashHex)
     .entryPoint('deposit')
     .runtimeArgs(args)
     .payment(Number.parseInt(paymentMotes, 10))
@@ -125,7 +116,7 @@ export const buildWithdrawTransaction = (
   // Build transaction using ContractCallBuilder
   const transaction = new ContractCallBuilder()
     .from(PublicKey.fromHex(publicKeyHex))
-    .contractHash(Hash.fromHex(hashHex))
+    .contractHash(hashHex)
     .entryPoint('withdraw')
     .runtimeArgs(args)
     .payment(Number.parseInt(paymentMotes, 10))
@@ -140,71 +131,6 @@ export const buildWithdrawTransaction = (
       Version1: transaction.toJSON()
     }
   };
-};
-
-/**
- * Sign and submit a deploy using the connected wallet provider
- */
-export const signAndSubmitDeploy = async (
-  deploy: Deploy,
-  walletProvider: any
-): Promise<string> => {
-  try {
-    // Serialize deploy for signing
-    const deployJson = Deploy.toJSON(deploy);
-
-    console.log('📤 Sending deploy to wallet for signing...');
-
-    // Sign with wallet provider - it returns just the signature, not the full deploy
-    const signatureResponse = await walletProvider.sign(
-      JSON.stringify(deployJson),
-      deploy.header.account!.toHex()
-    );
-
-    console.log('✅ Signature received from wallet');
-    console.log('📋 Signature hex:', signatureResponse.signatureHex);
-
-    if (signatureResponse.cancelled) {
-      throw new Error('User cancelled the signing request');
-    }
-
-    // Add the signature to the original deploy
-    // The signature bytes are in the 'signature' field
-    const signatureBytes = new Uint8Array(Object.values(signatureResponse.signature));
-
-    // Create a HexBytes object from the signature
-    const signature = new HexBytes(signatureBytes);
-
-    // Create an Approval with the signer's public key and signature
-    const approval = new Approval(deploy.header.account!, signature);
-
-    // Add the approval using the proper method
-    deploy.addApproval(approval);
-
-    console.log('✅ Signature added to deploy');
-    console.log('📋 Deploy approvals count:', deploy.approvals.length);
-    console.log('📋 Deploy hash:', deploy.hash.toHex());
-    console.log('📋 Submitting to RPC using rpcClient.putDeploy()');
-
-    // Submit to network using rpcClient.putDeploy() as recommended in migration guide
-    try {
-      const result = await rpcClient.putDeploy(deploy);
-      const deployHashString = result.deployHash.toHex();
-      console.log('✅ Deploy submitted:', deployHashString);
-      return deployHashString;
-    } catch (rpcError: any) {
-      console.error('❌ RPC putDeploy failed:', rpcError);
-      console.error('❌ RPC error details:', {
-        message: rpcError.message,
-        stack: rpcError.stack,
-        name: rpcError.name,
-      });
-      throw rpcError;
-    }
-  } catch (error) {
-    console.error('❌ Deploy submission failed:', error);
-    throw error;
-  }
 };
 
 /**
