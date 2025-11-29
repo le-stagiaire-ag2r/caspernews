@@ -205,7 +205,7 @@ export const signAndSubmitDeploy = async (
     // Submit to network using RpcClient (it handles serialization automatically)
     try {
       const result = await rpcClient.putDeploy(deploy);
-      const deployHashString = result.deployHash;
+      const deployHashString = result.deployHash.toHex();
       console.log('✅ Deploy submitted:', deployHashString);
       return deployHashString;
     } catch (rpcError: any) {
