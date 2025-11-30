@@ -98,11 +98,14 @@ export const useClickWallet = () => {
 
     try {
       console.log('📤 Sending transaction via CSPR.click...');
+      console.log('📋 Transaction being sent:', JSON.stringify(transaction, null, 2));
 
       // Send with targetPublicKey and sourcePublicKey
       const result = await clickRef.send(JSON.stringify(transaction), activePublicKey);
 
       console.log('✅ Transaction result:', result);
+      console.log('📋 Result keys:', Object.keys(result || {}));
+      console.log('📋 Result JSON:', JSON.stringify(result, null, 2));
       return result;
     } catch (error) {
       console.error('❌ Failed to send transaction:', error);
