@@ -6,7 +6,6 @@ import {
   RpcClient,
   HttpHandler,
   ContractCallBuilder,
-  Hash,
 } from 'casper-js-sdk';
 
 export const CASPER_NETWORK_NAME = import.meta.env.VITE_CASPER_NETWORK || 'casper-test';
@@ -71,7 +70,7 @@ export const createDepositTransaction = (
   // Build transaction using ContractCallBuilder (SDK v5)
   const transaction = new ContractCallBuilder()
     .from(PublicKey.fromHex(publicKeyHex))
-    .contractHash(Hash.fromHex(contractHashHex)) // Hash object, not string!
+    .contractHash(contractHashHex) // String (compiles on Vercel)
     .entryPoint('deposit')
     .runtimeArgs(args)
     .payment(parseInt(paymentMotes))
@@ -81,13 +80,9 @@ export const createDepositTransaction = (
   console.log('✅ Transaction created (SDK v5)');
   console.log('🔍 Transaction object:', transaction);
 
-  // Return in CSPR.click format (Version1 wrapper)
-  const result = {
-    transaction: {
-      Version1: transaction.toJSON()
-    }
-  };
-  console.log('📦 Transaction result:', JSON.stringify(result, null, 2));
+  // Return JSON directly - let CSPR.click handle the wrapping
+  const result = transaction.toJSON();
+  console.log('📦 Transaction JSON:', JSON.stringify(result, null, 2));
 
   return result;
 };
@@ -120,7 +115,7 @@ export const createWithdrawTransaction = (
   // Build transaction using ContractCallBuilder (SDK v5)
   const transaction = new ContractCallBuilder()
     .from(PublicKey.fromHex(publicKeyHex))
-    .contractHash(Hash.fromHex(contractHashHex)) // Hash object, not string!
+    .contractHash(contractHashHex) // String (compiles on Vercel)
     .entryPoint('withdraw')
     .runtimeArgs(args)
     .payment(parseInt(paymentMotes))
@@ -130,13 +125,9 @@ export const createWithdrawTransaction = (
   console.log('✅ Transaction created (SDK v5)');
   console.log('🔍 Transaction object:', transaction);
 
-  // Return in CSPR.click format (Version1 wrapper)
-  const result = {
-    transaction: {
-      Version1: transaction.toJSON()
-    }
-  };
-  console.log('📦 Transaction result:', JSON.stringify(result, null, 2));
+  // Return JSON directly - let CSPR.click handle the wrapping
+  const result = transaction.toJSON();
+  console.log('📦 Transaction JSON:', JSON.stringify(result, null, 2));
 
   return result;
 };
