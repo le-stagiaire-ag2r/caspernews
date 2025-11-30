@@ -8,24 +8,43 @@ export const useClickWallet = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Check if already connected when clickRef is available
+    // Check connection status periodically to detect changes
     const checkConnection = async () => {
       if (clickRef) {
         try {
           const publicKey = await clickRef.getActivePublicKey();
           if (publicKey) {
-            setActivePublicKey(publicKey);
-            setIsConnected(true);
+            if (publicKey !== activePublicKey) {
+              console.log('✅ Wallet state updated:', publicKey);
+              setActivePublicKey(publicKey);
+              setIsConnected(true);
+            }
+          } else {
+            // Not connected
+            if (isConnected) {
+              console.log('🔌 Wallet disconnected');
+              setActivePublicKey(null);
+              setIsConnected(false);
+            }
           }
         } catch (error) {
-          // Not connected yet
-          console.log('Wallet not connected');
+          // Not connected or error
+          if (isConnected) {
+            setActivePublicKey(null);
+            setIsConnected(false);
+          }
         }
       }
     };
 
+    // Check immediately
     checkConnection();
-  }, [clickRef]);
+
+    // Poll every 500ms to detect connection changes
+    const interval = setInterval(checkConnection, 500);
+
+    return () => clearInterval(interval);
+  }, [clickRef, activePublicKey, isConnected]);
 
   const connect = async () => {
     if (!clickRef) {
@@ -79,11 +98,14 @@ export const useClickWallet = () => {
 
     try {
       console.log('📤 Sending transaction via CSPR.click...');
+      console.log('📋 Transaction being sent:', JSON.stringify(transaction, null, 2));
 
       // Send with targetPublicKey and sourcePublicKey
       const result = await clickRef.send(JSON.stringify(transaction), activePublicKey);
 
       console.log('✅ Transaction result:', result);
+      console.log('📋 Result keys:', Object.keys(result || {}));
+      console.log('📋 Result JSON:', JSON.stringify(result, null, 2));
       return result;
     } catch (error) {
       console.error('❌ Failed to send transaction:', error);

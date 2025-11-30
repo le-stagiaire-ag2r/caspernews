@@ -1,9 +1,24 @@
+import { useState, useEffect } from 'react';
 import { useClickRef } from '@make-software/csprclick-ui';
+import { useWallet } from '../hooks/useWallet';
 
 export const Header = () => {
   const clickRef = useClickRef();
-  const activeAccount = clickRef?.getActiveAccount();
-  const isConnected = !!activeAccount;
+  const [isSDKReady, setIsSDKReady] = useState(false);
+
+  // Use wallet state instead of clickRef directly for reactive updates
+  const { activeAccount, isConnected } = useWallet();
+
+  // Monitor SDK initialization
+  useEffect(() => {
+    if (clickRef) {
+      console.log('✅ CSPR.click SDK is ready!');
+      setIsSDKReady(true);
+    } else {
+      console.log('⏳ Waiting for CSPR.click SDK...');
+      setIsSDKReady(false);
+    }
+  }, [clickRef]);
 
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -11,15 +26,10 @@ export const Header = () => {
 
   const handleConnect = () => {
     console.log('🔘 Connect button clicked');
-    console.log('🔧 clickRef:', clickRef);
-
-    if (!clickRef) {
-      console.error('❌ clickRef is not initialized!');
-      return;
+    if (clickRef) {
+      console.log('✅ Calling clickRef.signIn()...');
+      clickRef.signIn();
     }
-
-    console.log('✅ Calling clickRef.signIn()...');
-    clickRef.signIn();
   };
 
   const handleDisconnect = () => {
@@ -57,9 +67,14 @@ export const Header = () => {
           ) : (
             <button
               onClick={handleConnect}
-              className="px-6 py-2 bg-casper-red hover:bg-red-600 text-white font-semibold rounded-lg transition-colors shadow-lg hover:shadow-xl"
+              disabled={!isSDKReady}
+              className={`px-6 py-2 font-semibold rounded-lg transition-colors shadow-lg ${
+                isSDKReady
+                  ? 'bg-casper-red hover:bg-red-600 hover:shadow-xl cursor-pointer'
+                  : 'bg-gray-600 cursor-not-allowed opacity-50'
+              } text-white`}
             >
-              Connect Wallet
+              {isSDKReady ? 'Connect Wallet' : 'Initializing SDK...'}
             </button>
           )}
         </div>
