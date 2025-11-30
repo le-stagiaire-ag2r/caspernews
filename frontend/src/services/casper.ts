@@ -70,7 +70,8 @@ export const createDepositTransaction = (
   // Build transaction using ContractCallBuilder (SDK v5)
   const transaction = new ContractCallBuilder()
     .from(PublicKey.fromHex(publicKeyHex))
-    .contractHash(contractHashHex) // String, not Hash object
+    .target(contractHashHex) // Transaction target (contract hash)
+    .contractHash(contractHashHex) // Contract hash
     .entryPoint('deposit')
     .runtimeArgs(args)
     .payment(parseInt(paymentMotes)) // Number in motes
@@ -115,7 +116,8 @@ export const createWithdrawTransaction = (
   // Build transaction using ContractCallBuilder (SDK v5)
   const transaction = new ContractCallBuilder()
     .from(PublicKey.fromHex(publicKeyHex))
-    .contractHash(contractHashHex) // String, not Hash object
+    .target(contractHashHex) // Transaction target (contract hash)
+    .contractHash(contractHashHex) // Contract hash
     .entryPoint('withdraw')
     .runtimeArgs(args)
     .payment(parseInt(paymentMotes)) // Number in motes

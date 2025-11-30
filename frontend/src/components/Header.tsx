@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useClickRef } from '@make-software/csprclick-ui';
+import { useWallet } from '../hooks/useWallet';
 
 export const Header = () => {
   const clickRef = useClickRef();
   const [isSDKReady, setIsSDKReady] = useState(false);
-  const activeAccount = clickRef?.getActiveAccount();
-  const isConnected = !!activeAccount;
+
+  // Use wallet state instead of clickRef directly for reactive updates
+  const { activeAccount, isConnected } = useWallet();
 
   // Monitor SDK initialization
   useEffect(() => {
