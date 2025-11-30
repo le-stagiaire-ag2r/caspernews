@@ -78,13 +78,13 @@ export const createDepositTransaction = (
     .build();
 
   console.log('✅ Transaction created (SDK v5)');
+  console.log('🔍 Transaction object:', transaction);
 
-  // Return in CSPR.click format
-  return {
-    transaction: {
-      Version1: transaction.toJSON()
-    }
-  };
+  // Return transaction JSON directly for CSPR.click
+  const transactionJSON = transaction.toJSON();
+  console.log('📦 Transaction JSON:', JSON.stringify(transactionJSON, null, 2));
+
+  return transactionJSON;
 };
 
 /**
@@ -123,13 +123,13 @@ export const createWithdrawTransaction = (
     .build();
 
   console.log('✅ Transaction created (SDK v5)');
+  console.log('🔍 Transaction object:', transaction);
 
-  // Return in CSPR.click format
-  return {
-    transaction: {
-      Version1: transaction.toJSON()
-    }
-  };
+  // Return transaction JSON directly for CSPR.click
+  const transactionJSON = transaction.toJSON();
+  console.log('📦 Transaction JSON:', JSON.stringify(transactionJSON, null, 2));
+
+  return transactionJSON;
 };
 
 /**
