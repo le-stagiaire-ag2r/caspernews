@@ -56,13 +56,14 @@ export const createDepositTransaction = (
   const amountMotes = csprToMotes(amountCspr);
   const paymentMotes = csprToMotes('5'); // 5 CSPR gas payment
 
-  // Get contract hash without 'hash-' prefix
-  const contractHashHex = CONTRACT_HASH.startsWith('hash-')
+  // Get contract hash without 'hash-' prefix and trim whitespace
+  const contractHashHex = (CONTRACT_HASH.startsWith('hash-')
     ? CONTRACT_HASH.substring(5)
-    : CONTRACT_HASH;
+    : CONTRACT_HASH).trim();
 
   console.log('📋 Creating deposit transaction (SDK v5 Deploy pattern):');
   console.log('  Contract Hash:', contractHashHex);
+  console.log('  Contract Hash Length:', contractHashHex.length);
   console.log('  Amount:', amountCspr, 'CSPR');
   console.log('  Public Key:', publicKeyHex);
 
@@ -114,13 +115,14 @@ export const createWithdrawTransaction = (
 ) => {
   const paymentMotes = csprToMotes('7'); // 7 CSPR gas payment
 
-  // Get contract hash without 'hash-' prefix
-  const contractHashHex = CONTRACT_HASH.startsWith('hash-')
+  // Get contract hash without 'hash-' prefix and trim whitespace
+  const contractHashHex = (CONTRACT_HASH.startsWith('hash-')
     ? CONTRACT_HASH.substring(5)
-    : CONTRACT_HASH;
+    : CONTRACT_HASH).trim();
 
   console.log('📋 Creating withdraw transaction (SDK v5 Deploy pattern):');
   console.log('  Contract Hash:', contractHashHex);
+  console.log('  Contract Hash Length:', contractHashHex.length);
   console.log('  Shares:', sharesAmount);
   console.log('  Public Key:', publicKeyHex);
 
