@@ -94,13 +94,9 @@ export const createDepositTransaction = (
   console.log('✅ Deploy created (SDK v5)');
   console.log('🔍 Deploy object:', deploy);
 
-  // Return with Version1 wrapper as per CSPR.click documentation
-  const result = {
-    transaction: {
-      Version1: Deploy.toJSON(deploy)
-    }
-  };
-  console.log('📦 Transaction JSON:', JSON.stringify(result, null, 2));
+  // Return deploy JSON directly - CSPR.click expects the deploy, not wrapped
+  const result = Deploy.toJSON(deploy);
+  console.log('📦 Deploy JSON:', JSON.stringify(result, null, 2));
 
   return result;
 };
@@ -153,13 +149,9 @@ export const createWithdrawTransaction = (
   console.log('✅ Deploy created (SDK v5)');
   console.log('🔍 Deploy object:', deploy);
 
-  // Return with Version1 wrapper as per CSPR.click documentation
-  const result = {
-    transaction: {
-      Version1: Deploy.toJSON(deploy)
-    }
-  };
-  console.log('📦 Transaction JSON:', JSON.stringify(result, null, 2));
+  // Return deploy JSON directly - CSPR.click expects the deploy, not wrapped
+  const result = Deploy.toJSON(deploy);
+  console.log('📦 Deploy JSON:', JSON.stringify(result, null, 2));
 
   return result;
 };
