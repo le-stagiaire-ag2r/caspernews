@@ -8,24 +8,43 @@ export const useClickWallet = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Check if already connected when clickRef is available
+    // Check connection status periodically to detect changes
     const checkConnection = async () => {
       if (clickRef) {
         try {
           const publicKey = await clickRef.getActivePublicKey();
           if (publicKey) {
-            setActivePublicKey(publicKey);
-            setIsConnected(true);
+            if (publicKey !== activePublicKey) {
+              console.log('✅ Wallet state updated:', publicKey);
+              setActivePublicKey(publicKey);
+              setIsConnected(true);
+            }
+          } else {
+            // Not connected
+            if (isConnected) {
+              console.log('🔌 Wallet disconnected');
+              setActivePublicKey(null);
+              setIsConnected(false);
+            }
           }
         } catch (error) {
-          // Not connected yet
-          console.log('Wallet not connected');
+          // Not connected or error
+          if (isConnected) {
+            setActivePublicKey(null);
+            setIsConnected(false);
+          }
         }
       }
     };
 
+    // Check immediately
     checkConnection();
-  }, [clickRef]);
+
+    // Poll every 500ms to detect connection changes
+    const interval = setInterval(checkConnection, 500);
+
+    return () => clearInterval(interval);
+  }, [clickRef, activePublicKey, isConnected]);
 
   const connect = async () => {
     if (!clickRef) {
