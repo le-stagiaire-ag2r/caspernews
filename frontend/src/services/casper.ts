@@ -8,7 +8,7 @@ import {
   Deploy,
   DeployHeader,
   ExecutableDeployItem,
-  StoredContractByHash,
+  StoredVersionedContractByHash,
   ContractHash,
 } from 'casper-js-sdk';
 
@@ -72,12 +72,13 @@ export const createDepositTransaction = (
     amount: CLValue.newCLUInt512(amountMotes),
   });
 
-  // Build session using ExecutableDeployItem and StoredContractByHash (SDK v5)
+  // Build session using ExecutableDeployItem and StoredVersionedContractByHash for Odra contracts
   const session = new ExecutableDeployItem();
-  session.storedContractByHash = new StoredContractByHash(
+  session.storedVersionedContractByHash = new StoredVersionedContractByHash(
     ContractHash.newContract(contractHashHex),
     'deposit',
-    args
+    args,
+    1 // Version 1 (first deployed version)
   );
 
   // Create deploy header
@@ -127,12 +128,13 @@ export const createWithdrawTransaction = (
     shares: CLValue.newCLUInt256(sharesAmount),
   });
 
-  // Build session using ExecutableDeployItem and StoredContractByHash (SDK v5)
+  // Build session using ExecutableDeployItem and StoredVersionedContractByHash for Odra contracts
   const session = new ExecutableDeployItem();
-  session.storedContractByHash = new StoredContractByHash(
+  session.storedVersionedContractByHash = new StoredVersionedContractByHash(
     ContractHash.newContract(contractHashHex),
     'withdraw',
-    args
+    args,
+    1 // Version 1 (first deployed version)
   );
 
   // Create deploy header
