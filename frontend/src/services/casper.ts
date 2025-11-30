@@ -6,7 +6,6 @@ import {
   RpcClient,
   HttpHandler,
   ContractCallBuilder,
-  Hash,
 } from 'casper-js-sdk';
 
 export const CASPER_NETWORK_NAME = import.meta.env.VITE_CASPER_NETWORK || 'casper-test';
@@ -71,10 +70,10 @@ export const createDepositTransaction = (
   // Build transaction using ContractCallBuilder (SDK v5)
   const transaction = new ContractCallBuilder()
     .from(PublicKey.fromHex(publicKeyHex))
-    .contractHash(Hash.fromHex(contractHashHex))
+    .contractHash(contractHashHex) // String, not Hash object
     .entryPoint('deposit')
     .runtimeArgs(args)
-    .payment(paymentMotes)
+    .payment(parseInt(paymentMotes)) // Number in motes
     .chainName(CASPER_NETWORK_NAME)
     .build();
 
@@ -116,10 +115,10 @@ export const createWithdrawTransaction = (
   // Build transaction using ContractCallBuilder (SDK v5)
   const transaction = new ContractCallBuilder()
     .from(PublicKey.fromHex(publicKeyHex))
-    .contractHash(Hash.fromHex(contractHashHex))
+    .contractHash(contractHashHex) // String, not Hash object
     .entryPoint('withdraw')
     .runtimeArgs(args)
-    .payment(paymentMotes)
+    .payment(parseInt(paymentMotes)) // Number in motes
     .chainName(CASPER_NETWORK_NAME)
     .build();
 
